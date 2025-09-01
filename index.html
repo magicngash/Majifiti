@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H2O Nearby</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSDJPIE5lYXJieSIsInNob3J0X25hbWUiOiJIMk8gTmVhcmJ5IiwiZGVzY3JpcHRpb24iOiJXYXRlciBkZWxpdmVyeSBhcHAiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJ0aGVtZV9jb2xvciI6IiMwMDdhZmYiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSTFNakVpSUdobGFXZG9kRDBpTlRJeElpQjJhV1YzUW05NFBTSXdJREFnTlRJeElEVXlNU0krUEhOMGVXeGxQaTV6Ym5WNmRXdDZJSE10TFhCMExtVndleWgwZEc5dk1sa2ZQRzkwUW14aGJrcGhjbUZqZEdWdVRHZGZUWEJqYVRNelFTaGZabUo1Vmtoek5VVjZabTFzZFZGVUx3PTOPT09JIiwiaWRlbnRpZmllciI6Ik0xUE9OTEZJTCIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #007aff, #0056b3);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .hamburger {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .hamburger:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .menu {
+            background: white;
+            width: 280px;
+            height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .menu-overlay.open .menu {
+            transform: translateX(0);
+        }
+        
+        .menu-header {
+            background: linear-gradient(135deg, #007aff, #0056b3);
+            color: white;
+            padding: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .menu-items {
+            padding: 1rem 0;
+        }
+        
+        .menu-item {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: #374151;
+            text-decoration: none;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        
+        .menu-item:hover {
+            background: #f9fafb;
+        }
+        
+        .main {
+            flex: 1;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .map-container {
+            height: 300px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .map-placeholder {
+            text-align: center;
+            color: #6b7280;
+            padding: 2rem;
+        }
+        
+        .btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-family: inherit;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn-full {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .vendor-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .vendor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .vendor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .vendor-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .distance {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .favorite-badge {
+            background: #fbbf24;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+        
+        .vendor-info {
+            margin: 0.5rem 0;
+            color: #6b7280;
+        }
+        
+        .vendor-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .vendor-actions .btn {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .input, .select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+        
+        .order-summary {
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .order-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s;
+        }
+        
+        .order-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .order-date {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .notification-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #007aff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .notification-time {
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+        
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .quantity-btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .quantity-btn:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        
+        .quantity-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .quantity-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+        }
+        
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #86efac;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status-badge {
+            background: #10b981;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .main {
+                padding: 0.5rem;
+            }
+            
+            .vendor-actions {
+                flex-direction: column;
+            }
+            
+            .vendor-actions .btn {
+                flex: none;
+            }
+            
+            .menu {
+                width: 100vw;
+            }
+            
+            .quantity-selector {
+                gap: 1.5rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        // Dummy data
+        const VENDORS = [
+            {"id":1,"name":"Crystal Water","phone":"254712000111","distance_km":0.8,"available_sizes":["10L","20L"],"lat":-1.2921,"lng":36.8219},
+            {"id":2,"name":"Pure H2O","phone":"254712000222","distance_km":1.2,"available_sizes":["10L","20L"],"lat":-1.2841,"lng":36.8155},
+            {"id":3,"name":"AquaFresh","phone":"254712000333","distance_km":1.5,"available_sizes":["10L","20L"],"lat":-1.3028,"lng":36.8073}
+        ];
+
+        const INITIAL_CUSTOMER = {
+            "id":1,
+            "name":"John Doe",
+            "phone":"254712999888",
+            "email":"johndoe@example.com",
+            "default_address":"123 Main St, Nairobi",
+            "preferred_vendor":1,
+            "preferred_size":"20L",
+            "last_order_quantity":2
+        };
+
+        const INITIAL_ORDERS = [
+            {"order_id":101,"vendor_id":1,"vendor_name":"Crystal Water","water_size":"20L","quantity":2,"status":"Sent","order_date":"2025-08-31 09:00"},
+            {"order_id":102,"vendor_id":2,"vendor_name":"Pure H2O","water_size":"10L","quantity":1,"status":"Sent","order_date":"2025-08-30 15:30"},
+            {"order_id":103,"vendor_id":3,"vendor_name":"AquaFresh","water_size":"20L","quantity":1,"status":"Sent","order_date":"2025-08-29 11:20"}
+        ];
+
+        // Global app state
+        let appState = {
+            currentPage: 'home',
+            menuOpen: false,
+            userLocation: null,
+            favorites: [1],
+            customerData: {...INITIAL_CUSTOMER},
+            orderHistory: [...INITIAL_ORDERS],
+            notifications: [
+                {id: 1, title: "Order Confirmed", message: "Your order from Crystal Water has been confirmed", time: "2 hours ago"},
+                {id: 2, title: "Welcome!", message: "Welcome to H2O Nearby! Find water vendors near you.", time: "1 day ago"}
+            ],
+            selectedVendor: null
+        };
+
+        // Storage functions
+        const getStoredData = (key, defaultValue) => {
+            try {
+                const stored = localStorage.getItem(key);
+                return stored ? JSON.parse(stored) : defaultValue;
+            } catch {
+                return defaultValue;
+            }
+        };
+
+        const setStoredData = (key, value) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch {
+                console.log('Storage not available');
+            }
+        };
+
+        // Load initial data from storage
+        appState.favorites = getStoredData('h2o_favorites', [1]);
+        appState.customerData = getStoredData('h2o_customer', INITIAL_CUSTOMER);
+        appState.orderHistory = getStoredData('h2o_orders', INITIAL_ORDERS);
+        appState.notifications = getStoredData('h2o_notifications', appState.notifications);
+
+        // Render functions
+        function render() {
+            const app = document.getElementById('root');
+            app.innerHTML = `
+                <div class="app">
+                    ${renderHeader()}
+                    ${renderMenu()}
+                    <main class="main">
+                        ${renderCurrentPage()}
+                    </main>
+                </div>
+            `;
+            attachEventListeners();
+        }
+
+        function renderHeader() {
+            return `
+                <header class="header">
+                    <div class="header-content">
+                        <button class="hamburger" onclick="toggleMenu()">☰</button>
+                        <div class="logo">💧 H2O Nearby</div>
+                        <div></div>
+                    </div>
+                </header>
+            `;
+        }
+
+        function renderMenu() {
+            return `
+                <div class="menu-overlay ${appState.menuOpen ? 'open' : ''}" onclick="closeMenu()">
+                    <div class="menu" onclick="event.stopPropagation()">
+                        <div class="menu-header">H2O Nearby</div>
+                        <div class="menu-items">
+                            <a class="menu-item" onclick="navigateTo('home')">🏠 Home</a>
+                            <a class="menu-item" onclick="navigateTo('vendors')">💧 Vendors Near Me</a>
+                            <a class="menu-item" onclick="navigateTo('favorites')">⭐ Favorites</a>
+                            <a class="menu-item" onclick="navigateTo('orders')">📋 Order History</a>
+                            <a class="menu-item" onclick="navigateTo('profile')">👤 Customer Details</a>
+                            <a class="menu-item" onclick="navigateTo('notifications')">🔔 Notifications ${appState.notifications.length > 0 ? `(${appState.notifications.length})` : ''}</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCurrentPage() {
+            switch(appState.currentPage) {
+                case 'home': return renderHomePage();
+                case 'vendors': return renderVendorsPage();
+                case 'favorites': return renderFavoritesPage();
+                case 'order': return renderOrderPage();
+                case 'orders': return renderOrderHistoryPage();
+                case 'profile': return renderProfilePage();
+                case 'notifications': return renderNotificationsPage();
+                default: return renderHomePage();
+            }
+        }
+
+        function renderHomePage() {
+            return `
+                <div>
+                    <h1 class="page-title">Find Water Vendors Near You</h1>
+                    
+                    <div class="map-container">
+                        <div class="map-placeholder">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                            <div>Interactive Map</div>
+                            <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                                ${appState.userLocation ? 
+                                    `Location: ${appState.userLocation.lat.toFixed(4)}, ${appState.userLocation.lng.toFixed(4)}` : 
+                                    'Detecting your location...'
+                                }
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                ${VENDORS.map(vendor => `
+                                    <div style="margin: 0.5rem 0; padding: 0.5rem; background: rgba(255,255,255,0.9); border-radius: 6px;">
+                                        📍 ${vendor.name} - ${vendor.distance_km}km
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-full" onclick="navigateTo('vendors')">
+                        💧 Find Vendors Near Me
+                    </button>
+                    
+                    <div style="text-align: center; margin-top: 1rem; color: #6b7280;">
+                        Tap to see vendor details and place orders
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderVendorsPage() {
+            const sortedVendors = [...VENDORS].sort((a, b) => {
+                const aIsFav = appState.favorites.includes(a.id);
+                const bIsFav = appState.favorites.includes(b.id);
+                if (aIsFav && !bIsFav) return -1;
+                if (!aIsFav && bIsFav) return 1;
+                return a.distance_km - b.distance_km;
+            });
+
+            return `
+                <div>
+                    <h1 class="page-title">Vendors Near Me</h1>
+                    ${sortedVendors.map(vendor => renderVendorCard(vendor)).join('')}
+                </div>
+            `;
+        }
+
+        function renderFavoritesPage() {
+            const favoriteVendors = VENDORS.filter(vendor => appState.favorites.includes(vendor.id));
+
+            return `
+                <div>
+                    <h1 class="page-title">My Favorite Vendors</h1>
+                    
+                    ${favoriteVendors.length === 0 ? `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⭐</div>
+                            <div>No favorite vendors yet.</div>
+                            <div style="margin-top: 0.5rem;">Add some from the Vendors page!</div>
+                            <button class="btn" style="margin-top: 1rem;" onclick="navigateTo('vendors')">
+                                Browse Vendors
+                            </button>
+                        </div>
+                    ` : favoriteVendors.map(vendor => renderVendorCard(vendor)).join('')}
+                </div>
+            `;
+        }
+
+        function renderVendorCard(vendor) {
+            const isFavorite = appState.favorites.includes(vendor.id);
+            const lastOrder = appState.orderHistory.find(order => order.vendor_id === vendor.id);
+
+            return `
+                <div class="vendor-card">
+                    <div class="vendor-header">
+                        <div>
+                            <div class="vendor-name">
+                                ${vendor.name}
+                                ${isFavorite ? '<span class="favorite-badge">★ Favorite</span>' : ''}
+                            </div>
+                            <div class="distance">${vendor.distance_km}km away</div>
+                        </div>
+                    </div>
+                    
+                    <div class="vendor-info">
+                        Available: ${vendor.available_sizes.join(', ')}
+                        ${lastOrder ? `
+                            <div style="margin-top: 0.25rem; font-weight: 500;">
+                                Last order: ${lastOrder.quantity}x ${lastOrder.water_size}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="vendor-actions">
+                        <button class="btn" onclick="orderFromVendor(${vendor.id})">
+                            📱 Order via WhatsApp
+                        </button>
+                        <button 
+                            class="btn ${isFavorite ? 'btn-secondary' : ''}"
+                            onclick="toggleFavorite(${vendor.id})"
+                        >
+                            ${isFavorite ? '★ Favorited' : '☆ Add to Favorites'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOrderPage() {
+            const vendor = appState.selectedVendor || VENDORS.find(v => v.id === appState.customerData.preferred_vendor) || VENDORS[0];
+            const selectedSize = appState.orderFormData?.selectedSize || appState.customerData.preferred_size || '20L';
+            const quantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
+            const customerLocation = appState.orderFormData?.customerLocation || appState.customerData.default_address;
+
+            return `
+                <div>
+                    <h1 class="page-title">Place Order</h1>
+                    
+                    <div class="vendor-card">
+                        <div class="vendor-name">${vendor.name}</div>
+                        <div class="distance">${vendor.distance_km}km away</div>
+                        <div class="vendor-info">Available: ${vendor.available_sizes.join(', ')}</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Water Size</label>
+                        <select class="select" id="waterSize" onchange="updateOrderForm('selectedSize', this.value)">
+                            ${vendor.available_sizes.map(size => `
+                                <option value="${size}" ${size === selectedSize ? 'selected' : ''}>${size}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Quantity</label>
+                        <div class="quantity-selector">
+                            <button 
+                                class="quantity-btn"
+                                onclick="updateQuantity(-1)"
+                                ${quantity <= 1 ? 'disabled' : ''}
+                            >
+                                -
+                            </button>
+                            <div class="quantity-value">${quantity}</div>
+                            <button 
+                                class="quantity-btn"
+                                onclick="updateQuantity(1)"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Delivery Address</label>
+                        <input 
+                            type="text"
+                            class="input"
+                            id="deliveryAddress"
+                            value="${customerLocation}"
+                            onchange="updateOrderForm('customerLocation', this.value)"
+                            placeholder="Enter delivery address"
+                        />
+                    </div>
+
+                    <div class="order-summary">
+                        <h3 style="margin-bottom: 0.5rem;">Order Summary</h3>
+                        <p><strong>Vendor:</strong> ${vendor.name}</p>
+                        <p><strong>Water:</strong> ${quantity}x ${selectedSize}</p>
+                        <p><strong>Customer:</strong> ${appState.customerData.name}</p>
+                        <p><strong>Phone:</strong> ${appState.customerData.phone}</p>
+                        <p><strong>Address:</strong> ${customerLocation}</p>
+                    </div>
+
+                    <button class="btn btn-full" onclick="submitOrder()">
+                        📱 Send Order via WhatsApp
+                    </button>
+
+                    <button class="btn btn-secondary btn-full" onclick="navigateTo('vendors')">
+                        ← Back to Vendors
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderOrderHistoryPage() {
+            return `
+                <div>
+                    <h1 class="page-title">Order History</h1>
+                    
+                    ${appState.orderHistory.length === 0 ? `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div>No orders yet.</div>
+                            <div style="margin-top: 0.5rem;">Place your first order!</div>
+                            <button class="btn" style="margin-top: 1rem;" onclick="navigateTo('vendors')">
+                                Browse Vendors
+                            </button>
+                        </div>
+                    ` : appState.orderHistory.map(order => `
+                        <div class="order-item">
+                            <div class="order-header">
+                                <div>
+                                    <div style="font-weight: bold;">${order.vendor_name}</div>
+                                    <div>${order.quantity}x ${order.water_size}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div class="status-badge">${order.status}</div>
+                                    <div class="order-date">${order.order_date}</div>
+                                </div>
+                            </div>
+                            <button 
+                                class="btn"
+                                style="margin-top: 0.5rem;"
+                                onclick="reorder(${order.vendor_id}, '${order.water_size}', ${order.quantity})"
+                            >
+                                🔄 Reorder
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderProfilePage() {
+            return `
+                <div>
+                    <h1 class="page-title">Customer Details</h1>
+                    
+                    <div class="form-group">
+                        <label class="label">Name</label>
+                        <input 
+                            type="text"
+                            class="input"
+                            id="customerName"
+                            value="${appState.customerData.name}"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Phone Number</label>
+                        <input 
+                            type="tel"
+                            class="input"
+                            id="customerPhone"
+                            value="${appState.customerData.phone}"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Email (Optional)</label>
+                        <input 
+                            type="email"
+                            class="input"
+                            id="customerEmail"
+                            value="${appState.customerData.email}"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Default Address</label>
+                        <input 
+                            type="text"
+                            class="input"
+                            id="customerAddress"
+                            value="${appState.customerData.default_address}"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Preferred Vendor</label>
+                        <select class="select" id="preferredVendor">
+                            ${VENDORS.map(vendor => `
+                                <option value="${vendor.id}" ${vendor.id === appState.customerData.preferred_vendor ? 'selected' : ''}>
+                                    ${vendor.name}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Preferred Water Size</label>
+                        <select class="select" id="preferredSize">
+                            <option value="10L" ${appState.customerData.preferred_size === '10L' ? 'selected' : ''}>10L</option>
+                            <option value="20L" ${appState.customerData.preferred_size === '20L' ? 'selected' : ''}>20L</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-full" onclick="saveProfile()">
+                        💾 Save Details
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderNotificationsPage() {
+            return `
+                <div>
+                    <h1 class="page-title">Notifications</h1>
+                    
+                    ${appState.notifications.length === 0 ? `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔔</div>
+                            <div>No notifications yet.</div>
+                        </div>
+                    ` : appState.notifications.map(notification => `
+                        <div class="notification-item">
+                            <div class="notification-title">${notification.title}</div>
+                            <div>${notification.message}</div>
+                            <div class="notification-time">${notification.time}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Event handlers
+        function toggleMenu() {
+            appState.menuOpen = !appState.menuOpen;
+            render();
+        }
+
+        function closeMenu() {
+            appState.menuOpen = false;
+            render();
+        }
+
+        function navigateTo(page) {
+            appState.currentPage = page;
+            appState.menuOpen = false;
+            render();
+        }
+
+        function toggleFavorite(vendorId) {
+            if (appState.favorites.includes(vendorId)) {
+                appState.favorites = appState.favorites.filter(id => id !== vendorId);
+            } else {
+                appState.favorites.push(vendorId);
+            }
+            setStoredData('h2o_favorites', appState.favorites);
+            render();
+        }
+
+        function orderFromVendor(vendorId) {
+            appState.selectedVendor = VENDORS.find(v => v.id === vendorId);
+            appState.orderFormData = null; // Reset form data
+            navigateTo('order');
+        }
+
+        function updateOrderForm(field, value) {
+            if (!appState.orderFormData) {
+                appState.orderFormData = {};
+            }
+            appState.orderFormData[field] = value;
+        }
+
+        function updateQuantity(change) {
+            const currentQuantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
+            const newQuantity = Math.max(1, currentQuantity + change);
+            updateOrderForm('quantity', newQuantity);
+            render();
+        }
+
+        function submitOrder() {
+            const vendor = appState.selectedVendor || VENDORS.find(v => v.id === appState.customerData.preferred_vendor) || VENDORS[0];
+            const selectedSize = appState.orderFormData?.selectedSize || appState.customerData.preferred_size || '20L';
+            const quantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
+            const customerLocation = appState.orderFormData?.customerLocation || appState.customerData.default_address;
+
+            const message = `Hi ${vendor.name}! I would like to order:
+
+🏷️ Customer: ${appState.customerData.name}
+📞 Phone: ${appState.customerData.phone}
+💧 Water: ${quantity}x ${selectedSize}
+📍 Address: ${customerLocation}
+🗺️ Location: https://maps.google.com/?q=${encodeURIComponent(customerLocation)}
+
+Please confirm availability and delivery time. Thank you!`;
+
+            const whatsappUrl = `https://wa.me/${vendor.phone}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+
+            // Save order
+            const newOrder = {
+                order_id: Date.now(),
+                vendor_id: vendor.id,
+                vendor_name: vendor.name,
+                water_size: selectedSize,
+                quantity: quantity,
+                status: "Sent",
+                order_date: new Date().toLocaleString()
+            };
+            
+            appState.orderHistory.unshift(newOrder);
+            setStoredData('h2o_orders', appState.orderHistory);
+
+            // Update customer preferences
+            appState.customerData.preferred_vendor = vendor.id;
+            appState.customerData.preferred_size = selectedSize;
+            appState.customerData.last_order_quantity = quantity;
+            setStoredData('h2o_customer', appState.customerData);
+
+            // Add notification
+            const notification = {
+                id: Date.now(),
+                title: "Order Sent",
+                message: `Your order from ${vendor.name} has been sent via WhatsApp`,
+                time: "Just now"
+            };
+            appState.notifications.unshift(notification);
+            setStoredData('h2o_notifications', appState.notifications);
+
+            // Show success message and redirect
+            showSuccessMessage();
+        }
+
+        function showSuccessMessage() {
+            const main = document.querySelector('.main');
+            main.innerHTML = `
+                <div class="success-message">
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
+                    <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">Order Sent!</div>
+                    <div>Your order has been sent via WhatsApp.</div>
+                    <div style="margin-top: 1rem;">Redirecting to order history...</div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                navigateTo('orders');
+            }, 2000);
+        }
+
+        function reorder(vendorId, waterSize, quantity) {
+            const vendor = VENDORS.find(v => v.id === vendorId);
+            appState.selectedVendor = vendor;
+            appState.orderFormData = {
+                selectedSize: waterSize,
+                quantity: quantity,
+                customerLocation: appState.customerData.default_address
+            };
+            navigateTo('order');
+        }
+
+        function saveProfile() {
+            const formData = {
+                ...appState.customerData,
+                name: document.getElementById('customerName').value,
+                phone: document.getElementById('customerPhone').value,
+                email: document.getElementById('customerEmail').value,
+                default_address: document.getElementById('customerAddress').value,
+                preferred_vendor: parseInt(document.getElementById('preferredVendor').value),
+                preferred_size: document.getElementById('preferredSize').value
+            };
+
+            appState.customerData = formData;
+            setStoredData('h2o_customer', formData);
+
+            // Show success message
+            const main = document.querySelector('.main');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = '✅ Profile updated successfully!';
+            main.insertBefore(successDiv, main.firstChild);
+
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.remove();
+                }
+            }, 3000);
+        }
+
+        function attachEventListeners() {
+            // Update order form inputs
+            const deliveryInput = document.getElementById('deliveryAddress');
+            if (deliveryInput) {
+                deliveryInput.addEventListener('input', (e) => {
+                    updateOrderForm('customerLocation', e.target.value);
+                });
+            }
+
+            const waterSizeSelect = document.getElementById('waterSize');
+            if (waterSizeSelect) {
+                waterSizeSelect.addEventListener('change', (e) => {
+                    updateOrderForm('selectedSize', e.target.value);
+                });
+            }
+        }
+
+        // Initialize user location
+        function initUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        appState.userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        console.log('Location detected successfully');
+                        render();
+                    },
+                    (error) => {
+                        console.log('Geolocation not available, using default location (Nairobi)');
+                        // Default to Nairobi if geolocation fails
+                        appState.userLocation = { lat: -1.2921, lng: 36.8219 };
+                        render();
+                    },
+                    {
+                        enableHighAccuracy: false,
+                        timeout: 10000,
+                        maximumAge: 600000
+                    }
+                );
+            } else {
+                console.log('Geolocation not supported, using default location');
+                appState.userLocation = { lat: -1.2921, lng: 36.8219 };
+                render();
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            initUserLocation();
+            render();
+        });
+
+        // PWA functionality (Service Worker registration removed for compatibility)
+
+        // Add to home screen prompt (simplified for better compatibility)
+        let installPromptAvailable = false;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            installPromptAvailable = true;
+            
+            // Show install suggestion after user has used the app
+            setTimeout(() => {
+                if (installPromptAvailable && !localStorage.getItem('h2o_install_dismissed')) {
+                    showInstallPrompt(e);
+                }
+            }, 5000);
+        });
+
+        function showInstallPrompt(promptEvent) {
+            const installBanner = document.createElement('div');
+            installBanner.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                right: 20px;
+                background: #007aff;
+                color: white;
+                padding: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                animation: slideUp 0.3s ease;
+            `;
+            
+            installBanner.innerHTML = `
+                <div>
+                    <div style="font-weight: bold; margin-bottom: 0.25rem;">Install H2O Nearby</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Add to home screen for quick access</div>
+                </div>
+                <div>
+                    <button id="installBtn" style="background: white; color: #007aff; border: none; padding: 0.5rem 1rem; border-radius: 6px; margin-right: 0.5rem; cursor: pointer; font-weight: bold;">Install</button>
+                    <button id="dismissBtn" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(installBanner);
+            
+            document.getElementById('installBtn').addEventListener('click', () => {
+                if (promptEvent) {
+                    promptEvent.prompt();
+                    promptEvent.userChoice.then(() => {
+                        installBanner.remove();
+                        installPromptAvailable = false;
+                    });
+                }
+            });
+            
+            document.getElementById('dismissBtn').addEventListener('click', () => {
+                localStorage.setItem('h2o_install_dismissed', 'true');
+                installBanner.remove();
+            });
+        }
+    </script>
+
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</body>
+</html>
