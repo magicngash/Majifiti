@@ -1,5 +1,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" /><!DOCTYPE html>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -181,6 +182,14 @@
         
         .btn-secondary:hover {
             background: #4b5563;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
         }
         
         .btn-full {
@@ -419,6 +428,74 @@
             font-weight: bold;
         }
         
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .admin-map-container {
+            height: 300px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #e5e7eb;
+            position: relative;
+        }
+        
+        .admin-map-placeholder {
+            text-align: center;
+            color: #6b7280;
+            padding: 2rem;
+        }
+        
+        .location-picker {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .location-info {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        
+        .vendor-edit-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .vendor-edit-actions .btn {
+            flex: 1;
+        }
+        
+        .admin-login {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .admin-login-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: #1f2937;
+        }
+        
         @keyframes slideIn {
             from { transform: translateY(-10px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -445,20 +522,22 @@
                 gap: 1.5rem;
                 padding: 1.5rem;
             }
+            
+            .admin-actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
     <script>
         // Dummy data
-        const VENDORS = [
+        let VENDORS = [
             {"id":1,"name":"Crystal Water","phone":"254722868475","distance_km":0.8,"available_sizes":["10L","20L"],"lat":-1.2921,"lng":36.8219},
             {"id":2,"name":"Pure H2O","phone":"254722868475","distance_km":1.2,"available_sizes":["10L","20L"],"lat":-1.2841,"lng":36.8155},
             {"id":3,"name":"AquaFresh","phone":"254722868475","distance_km":1.5,"available_sizes":["10L","20L"],"lat":-1.3028,"lng":36.8073}
         ];
-
         const INITIAL_CUSTOMER = {
             "id":1,
             "name":"John Doe",
@@ -469,13 +548,16 @@
             "preferred_size":"20L",
             "last_order_quantity":2
         };
-
         const INITIAL_ORDERS = [
             {"order_id":101,"vendor_id":1,"vendor_name":"Crystal Water","water_size":"20L","quantity":2,"status":"Sent","order_date":"2025-08-31 09:00"},
             {"order_id":102,"vendor_id":2,"vendor_name":"Pure H2O","water_size":"10L","quantity":1,"status":"Sent","order_date":"2025-08-30 15:30"},
             {"order_id":103,"vendor_id":3,"vendor_name":"AquaFresh","water_size":"20L","quantity":1,"status":"Sent","order_date":"2025-08-29 11:20"}
         ];
-
+        // Admin credentials
+        const ADMIN_CREDENTIALS = {
+            username: "admin",
+            password: "h2oadmin123"
+        };
         // Global app state
         let appState = {
             currentPage: 'home',
@@ -488,9 +570,12 @@
                 {id: 1, title: "Order Confirmed", message: "Your order from Crystal Water has been confirmed", time: "2 hours ago"},
                 {id: 2, title: "Welcome!", message: "Welcome to H2O Nearby! Find water vendors near you.", time: "1 day ago"}
             ],
-            selectedVendor: null
+            selectedVendor: null,
+            isAdmin: false,
+            adminLoggedIn: false,
+            editingVendor: null,
+            newVendorLocation: null
         };
-
         // Storage functions
         const getStoredData = (key, defaultValue) => {
             try {
@@ -500,7 +585,6 @@
                 return defaultValue;
             }
         };
-
         const setStoredData = (key, value) => {
             try {
                 localStorage.setItem(key, JSON.stringify(value));
@@ -508,13 +592,12 @@
                 console.log('Storage not available');
             }
         };
-
         // Load initial data from storage
+        VENDORS = getStoredData('h2o_vendors', VENDORS);
         appState.favorites = getStoredData('h2o_favorites', [1]);
         appState.customerData = getStoredData('h2o_customer', INITIAL_CUSTOMER);
         appState.orderHistory = getStoredData('h2o_orders', INITIAL_ORDERS);
         appState.notifications = getStoredData('h2o_notifications', appState.notifications);
-
         // Render functions
         function render() {
             const app = document.getElementById('root');
@@ -529,7 +612,6 @@
             `;
             attachEventListeners();
         }
-
         function renderHeader() {
             return `
                 <header class="header">
@@ -541,7 +623,6 @@
                 </header>
             `;
         }
-
         function renderMenu() {
             return `
                 <div class="menu-overlay ${appState.menuOpen ? 'open' : ''}" onclick="closeMenu()">
@@ -554,12 +635,17 @@
                             <a class="menu-item" onclick="navigateTo('orders')">📋 Order History</a>
                             <a class="menu-item" onclick="navigateTo('profile')">👤 Customer Details</a>
                             <a class="menu-item" onclick="navigateTo('notifications')">🔔 Notifications ${appState.notifications.length > 0 ? `(${appState.notifications.length})` : ''}</a>
+                            ${appState.adminLoggedIn ? `
+                                <a class="menu-item" onclick="navigateTo('admin')">⚙️ Admin Panel</a>
+                                <a class="menu-item" onclick="adminLogout()">🚪 Logout</a>
+                            ` : `
+                                <a class="menu-item" onclick="navigateTo('admin-login')">🔐 Admin Login</a>
+                            `}
                         </div>
                     </div>
                 </div>
             `;
         }
-
         function renderCurrentPage() {
             switch(appState.currentPage) {
                 case 'home': return renderHomePage();
@@ -569,10 +655,11 @@
                 case 'orders': return renderOrderHistoryPage();
                 case 'profile': return renderProfilePage();
                 case 'notifications': return renderNotificationsPage();
+                case 'admin': return renderAdminPage();
+                case 'admin-login': return renderAdminLoginPage();
                 default: return renderHomePage();
             }
         }
-
         function renderHomePage() {
             return `
                 <div>
@@ -604,7 +691,6 @@
                 </div>
             `;
         }
-
         function renderVendorsPage() {
             const sortedVendors = [...VENDORS].sort((a, b) => {
                 const aIsFav = appState.favorites.includes(a.id);
@@ -613,7 +699,6 @@
                 if (!aIsFav && bIsFav) return 1;
                 return a.distance_km - b.distance_km;
             });
-
             return `
                 <div>
                     <h1 class="page-title">Vendors Near Me</h1>
@@ -621,10 +706,8 @@
                 </div>
             `;
         }
-
         function renderFavoritesPage() {
             const favoriteVendors = VENDORS.filter(vendor => appState.favorites.includes(vendor.id));
-
             return `
                 <div>
                     <h1 class="page-title">My Favorite Vendors</h1>
@@ -642,11 +725,9 @@
                 </div>
             `;
         }
-
         function renderVendorCard(vendor) {
             const isFavorite = appState.favorites.includes(vendor.id);
             const lastOrder = appState.orderHistory.find(order => order.vendor_id === vendor.id);
-
             return `
                 <div class="vendor-card">
                     <div class="vendor-header">
@@ -682,13 +763,11 @@
                 </div>
             `;
         }
-
         function renderOrderPage() {
             const vendor = appState.selectedVendor || VENDORS.find(v => v.id === appState.customerData.preferred_vendor) || VENDORS[0];
             const selectedSize = appState.orderFormData?.selectedSize || appState.customerData.preferred_size || '20L';
             const quantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
             const customerLocation = appState.orderFormData?.customerLocation || appState.customerData.default_address;
-
             return `
                 <div>
                     <h1 class="page-title">Place Order</h1>
@@ -698,7 +777,6 @@
                         <div class="distance">${vendor.distance_km}km away</div>
                         <div class="vendor-info">Available: ${vendor.available_sizes.join(', ')}</div>
                     </div>
-
                     <div class="form-group">
                         <label class="label">Water Size</label>
                         <select class="select" id="waterSize" onchange="updateOrderForm('selectedSize', this.value)">
@@ -707,7 +785,6 @@
                             `).join('')}
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label class="label">Quantity</label>
                         <div class="quantity-selector">
@@ -727,7 +804,6 @@
                             </button>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label class="label">Delivery Address</label>
                         <input 
@@ -739,7 +815,6 @@
                             placeholder="Enter delivery address"
                         />
                     </div>
-
                     <div class="order-summary">
                         <h3 style="margin-bottom: 0.5rem;">Order Summary</h3>
                         <p><strong>Vendor:</strong> ${vendor.name}</p>
@@ -748,18 +823,15 @@
                         <p><strong>Phone:</strong> ${appState.customerData.phone}</p>
                         <p><strong>Address:</strong> ${customerLocation}</p>
                     </div>
-
                     <button class="btn btn-full" onclick="submitOrder()">
                         📱 Send Order via WhatsApp
                     </button>
-
                     <button class="btn btn-secondary btn-full" onclick="navigateTo('vendors')">
                         ← Back to Vendors
                     </button>
                 </div>
             `;
         }
-
         function renderOrderHistoryPage() {
             return `
                 <div>
@@ -798,7 +870,6 @@
                 </div>
             `;
         }
-
         function renderProfilePage() {
             return `
                 <div>
@@ -813,7 +884,6 @@
                             value="${appState.customerData.name}"
                         />
                     </div>
-
                     <div class="form-group">
                         <label class="label">Phone Number</label>
                         <input 
@@ -823,7 +893,6 @@
                             value="${appState.customerData.phone}"
                         />
                     </div>
-
                     <div class="form-group">
                         <label class="label">Email (Optional)</label>
                         <input 
@@ -833,7 +902,6 @@
                             value="${appState.customerData.email}"
                         />
                     </div>
-
                     <div class="form-group">
                         <label class="label">Default Address</label>
                         <input 
@@ -843,7 +911,6 @@
                             value="${appState.customerData.default_address}"
                         />
                     </div>
-
                     <div class="form-group">
                         <label class="label">Preferred Vendor</label>
                         <select class="select" id="preferredVendor">
@@ -854,7 +921,6 @@
                             `).join('')}
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label class="label">Preferred Water Size</label>
                         <select class="select" id="preferredSize">
@@ -862,14 +928,12 @@
                             <option value="20L" ${appState.customerData.preferred_size === '20L' ? 'selected' : ''}>20L</option>
                         </select>
                     </div>
-
                     <button class="btn btn-full" onclick="saveProfile()">
                         💾 Save Details
                     </button>
                 </div>
             `;
         }
-
         function renderNotificationsPage() {
             return `
                 <div>
@@ -890,24 +954,194 @@
                 </div>
             `;
         }
-
+        function renderAdminLoginPage() {
+            return `
+                <div class="admin-login">
+                    <h2 class="admin-login-title">Admin Login</h2>
+                    <div class="form-group">
+                        <label class="label">Username</label>
+                        <input type="text" class="input" id="adminUsername" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Password</label>
+                        <input type="password" class="input" id="adminPassword" placeholder="Enter password">
+                    </div>
+                    <button class="btn btn-full" onclick="adminLogin()">Login</button>
+                    <button class="btn btn-secondary btn-full" onclick="navigateTo('home')">Cancel</button>
+                </div>
+            `;
+        }
+        function renderAdminPage() {
+            if (!appState.adminLoggedIn) {
+                return renderAdminLoginPage();
+            }
+            
+            return `
+                <div>
+                    <div class="admin-header">
+                        <h1 class="page-title">Vendor Management</h1>
+                        <div class="admin-actions">
+                            <button class="btn" onclick="addNewVendor()">➕ Add New Vendor</button>
+                            <button class="btn btn-secondary" onclick="refreshVendors()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-map-container" id="adminMapContainer">
+                        <div class="admin-map-placeholder" id="adminMapPlaceholder">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                            <div>Loading Vendor Map...</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h2 style="margin-bottom: 1rem;">Vendor List</h2>
+                        ${VENDORS.length === 0 ? `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">💧</div>
+                                <div>No vendors registered yet.</div>
+                                <button class="btn" style="margin-top: 1rem;" onclick="addNewVendor()">
+                                    Add First Vendor
+                                </button>
+                            </div>
+                        ` : VENDORS.map(vendor => `
+                            <div class="vendor-card">
+                                <div class="vendor-header">
+                                    <div>
+                                        <div class="vendor-name">${vendor.name}</div>
+                                        <div class="distance">${vendor.distance_km}km away</div>
+                                    </div>
+                                    <div>
+                                        <button class="btn" onclick="editVendor(${vendor.id})">✏️ Edit</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="vendor-info">
+                                    Phone: ${vendor.phone}<br>
+                                    Available: ${vendor.available_sizes.join(', ')}<br>
+                                    Location: ${vendor.lat.toFixed(4)}, ${vendor.lng.toFixed(4)}
+                                </div>
+                                
+                                <div class="vendor-edit-actions">
+                                    <button class="btn btn-danger" onclick="deleteVendor(${vendor.id})">
+                                        🗑️ Delete
+                                    </button>
+                                    <button class="btn" onclick="viewVendorOnMap(${vendor.id})">
+                                        📍 View on Map
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        function renderAddEditVendorPage() {
+            const isEdit = !!appState.editingVendor;
+            const vendor = isEdit ? VENDORS.find(v => v.id === appState.editingVendor) : {};
+            
+            return `
+                <div>
+                    <h1 class="page-title">${isEdit ? 'Edit Vendor' : 'Add New Vendor'}</h1>
+                    
+                    <div class="form-group">
+                        <label class="label">Vendor Name</label>
+                        <input 
+                            type="text" 
+                            class="input" 
+                            id="vendorName" 
+                            value="${vendor.name || ''}"
+                            placeholder="Enter vendor name"
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="label">Phone Number</label>
+                        <input 
+                            type="tel" 
+                            class="input" 
+                            id="vendorPhone" 
+                            value="${vendor.phone || ''}"
+                            placeholder="Enter phone number with country code"
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="label">Available Sizes</label>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <input type="checkbox" id="size10L" ${vendor.available_sizes?.includes('10L') ? 'checked' : ''} style="margin-right: 0.5rem;">
+                                <span>10L</span>
+                            </label>
+                            <label style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <input type="checkbox" id="size20L" ${vendor.available_sizes?.includes('20L') ? 'checked' : ''} style="margin-right: 0.5rem;">
+                                <span>20L</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="location-picker">
+                        <h3 style="margin-bottom: 0.5rem;">Vendor Location</h3>
+                        <div id="vendorLocationPicker" style="height: 200px; border-radius: 8px; overflow: hidden; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
+                                    <div>Loading map...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="location-info">
+                            Click on the map to set vendor location
+                        </div>
+                        <div id="locationCoordinates" style="margin-top: 0.5rem; font-weight: 500;">
+                            ${isEdit ? `Current: ${vendor.lat.toFixed(4)}, ${vendor.lng.toFixed(4)}` : 'No location selected'}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="label">Distance (km)</label>
+                        <input 
+                            type="number" 
+                            class="input" 
+                            id="vendorDistance" 
+                            value="${vendor.distance_km || ''}"
+                            placeholder="Enter distance in km"
+                            step="0.1"
+                        />
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn btn-full" onclick="saveVendor()">
+                            ${isEdit ? '💾 Save Changes' : '➕ Add Vendor'}
+                        </button>
+                        <button class="btn btn-secondary btn-full" onclick="navigateTo('admin')">
+                            ← Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
         // Event handlers
         function toggleMenu() {
             appState.menuOpen = !appState.menuOpen;
             render();
         }
-
         function closeMenu() {
             appState.menuOpen = false;
             render();
         }
-
         function navigateTo(page) {
             appState.currentPage = page;
             appState.menuOpen = false;
             render();
+            
+            if (page === 'home' && appState.userLocation) {
+                initializeMap();
+            } else if (page === 'admin' && appState.adminLoggedIn) {
+                initializeAdminMap();
+            } else if ((page === 'add-vendor' || page === 'edit-vendor') && appState.userLocation) {
+                initializeVendorLocationPicker();
+            }
         }
-
         function toggleFavorite(vendorId) {
             if (appState.favorites.includes(vendorId)) {
                 appState.favorites = appState.favorites.filter(id => id !== vendorId);
@@ -917,53 +1151,43 @@
             setStoredData('h2o_favorites', appState.favorites);
             render();
         }
-
         function orderFromVendor(vendorId) {
             appState.selectedVendor = VENDORS.find(v => v.id === vendorId);
             appState.orderFormData = null; // Reset form data
             navigateTo('order');
         }
-
         function updateOrderForm(field, value) {
             if (!appState.orderFormData) {
                 appState.orderFormData = {};
             }
             appState.orderFormData[field] = value;
         }
-
         function updateQuantity(change) {
             const currentQuantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
             const newQuantity = Math.max(1, currentQuantity + change);
             updateOrderForm('quantity', newQuantity);
             render();
         }
-
         function submitOrder() {
             const vendor = appState.selectedVendor || VENDORS.find(v => v.id === appState.customerData.preferred_vendor) || VENDORS[0];
             const selectedSize = appState.orderFormData?.selectedSize || appState.customerData.preferred_size || '20L';
             const quantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
             const customerLocation = appState.orderFormData?.customerLocation || appState.customerData.default_address;
-
             // Create location links
             const addressLink = `https://maps.google.com/?q=${encodeURIComponent(customerLocation)}`;
             const gpsLink = appState.userLocation ? 
                 `https://maps.google.com/?q=${appState.userLocation.lat},${appState.userLocation.lng}` : 
                 addressLink;
-
             const message = `Hi ${vendor.name}! I would like to order:
-
 🏷️ Customer: ${appState.customerData.name}
 📞 Phone: ${appState.customerData.phone}
 💧 Water: ${quantity}x ${selectedSize}
 📍 Address: ${customerLocation}
 🗺️ Address Link: ${addressLink}
 ${appState.userLocation ? `📱 My GPS Location: ${gpsLink}` : ''}
-
 Please confirm availability and delivery time. Thank you!`;
-
             const whatsappUrl = `https://wa.me/${vendor.phone}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
-
             // Save order
             const newOrder = {
                 order_id: Date.now(),
@@ -977,13 +1201,11 @@ Please confirm availability and delivery time. Thank you!`;
             
             appState.orderHistory.unshift(newOrder);
             setStoredData('h2o_orders', appState.orderHistory);
-
             // Update customer preferences
             appState.customerData.preferred_vendor = vendor.id;
             appState.customerData.preferred_size = selectedSize;
             appState.customerData.last_order_quantity = quantity;
             setStoredData('h2o_customer', appState.customerData);
-
             // Add notification
             const notification = {
                 id: Date.now(),
@@ -993,11 +1215,9 @@ Please confirm availability and delivery time. Thank you!`;
             };
             appState.notifications.unshift(notification);
             setStoredData('h2o_notifications', appState.notifications);
-
             // Show success message and redirect
             showSuccessMessage();
         }
-
         function showSuccessMessage() {
             const main = document.querySelector('.main');
             main.innerHTML = `
@@ -1013,7 +1233,6 @@ Please confirm availability and delivery time. Thank you!`;
                 navigateTo('orders');
             }, 2000);
         }
-
         function reorder(vendorId, waterSize, quantity) {
             const vendor = VENDORS.find(v => v.id === vendorId);
             appState.selectedVendor = vendor;
@@ -1024,7 +1243,6 @@ Please confirm availability and delivery time. Thank you!`;
             };
             navigateTo('order');
         }
-
         function saveProfile() {
             const formData = {
                 ...appState.customerData,
@@ -1035,24 +1253,134 @@ Please confirm availability and delivery time. Thank you!`;
                 preferred_vendor: parseInt(document.getElementById('preferredVendor').value),
                 preferred_size: document.getElementById('preferredSize').value
             };
-
             appState.customerData = formData;
             setStoredData('h2o_customer', formData);
-
             // Show success message
             const main = document.querySelector('.main');
             const successDiv = document.createElement('div');
             successDiv.className = 'success-message';
             successDiv.innerHTML = '✅ Profile updated successfully!';
             main.insertBefore(successDiv, main.firstChild);
-
             setTimeout(() => {
                 if (successDiv.parentNode) {
                     successDiv.remove();
                 }
             }, 3000);
         }
-
+        // Admin functions
+        function adminLogin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                appState.adminLoggedIn = true;
+                navigateTo('admin');
+            } else {
+                alert('Invalid username or password');
+            }
+        }
+        
+        function adminLogout() {
+            appState.adminLoggedIn = false;
+            appState.editingVendor = null;
+            appState.newVendorLocation = null;
+            navigateTo('home');
+        }
+        
+        function addNewVendor() {
+            appState.editingVendor = null;
+            appState.newVendorLocation = appState.userLocation || { lat: -1.2921, lng: 36.8219 };
+            appState.currentPage = 'add-vendor';
+            render();
+            initializeVendorLocationPicker();
+        }
+        
+        function editVendor(vendorId) {
+            appState.editingVendor = vendorId;
+            const vendor = VENDORS.find(v => v.id === vendorId);
+            appState.newVendorLocation = { lat: vendor.lat, lng: vendor.lng };
+            appState.currentPage = 'edit-vendor';
+            render();
+            initializeVendorLocationPicker();
+        }
+        
+        function saveVendor() {
+            const name = document.getElementById('vendorName').value.trim();
+            const phone = document.getElementById('vendorPhone').value.trim();
+            const distance_km = parseFloat(document.getElementById('vendorDistance').value);
+            const size10L = document.getElementById('size10L').checked;
+            const size20L = document.getElementById('size20L').checked;
+            
+            if (!name || !phone || isNaN(distance_km) || (!size10L && !size20L)) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
+            if (!appState.newVendorLocation) {
+                alert('Please select a location on the map');
+                return;
+            }
+            
+            const available_sizes = [];
+            if (size10L) available_sizes.push('10L');
+            if (size20L) available_sizes.push('20L');
+            
+            if (appState.editingVendor) {
+                // Update existing vendor
+                const index = VENDORS.findIndex(v => v.id === appState.editingVendor);
+                VENDORS[index] = {
+                    ...VENDORS[index],
+                    name,
+                    phone,
+                    distance_km,
+                    available_sizes,
+                    lat: appState.newVendorLocation.lat,
+                    lng: appState.newVendorLocation.lng
+                };
+            } else {
+                // Add new vendor
+                const newId = Math.max(...VENDORS.map(v => v.id), 0) + 1;
+                VENDORS.push({
+                    id: newId,
+                    name,
+                    phone,
+                    distance_km,
+                    available_sizes,
+                    lat: appState.newVendorLocation.lat,
+                    lng: appState.newVendorLocation.lng
+                });
+            }
+            
+            setStoredData('h2o_vendors', VENDORS);
+            navigateTo('admin');
+        }
+        
+        function deleteVendor(vendorId) {
+            if (confirm('Are you sure you want to delete this vendor? This action cannot be undone.')) {
+                VENDORS = VENDORS.filter(v => v.id !== vendorId);
+                setStoredData('h2o_vendors', VENDORS);
+                render();
+            }
+        }
+        
+        function viewVendorOnMap(vendorId) {
+            const vendor = VENDORS.find(v => v.id === vendorId);
+            if (vendor && appState.adminMap) {
+                appState.adminMap.setView([vendor.lat, vendor.lng], 15);
+                // Open the popup for this vendor
+                appState.adminMap.eachLayer(layer => {
+                    if (layer.options && layer.options.vendorId === vendorId) {
+                        layer.openPopup();
+                    }
+                });
+            }
+        }
+        
+        function refreshVendors() {
+            // Force re-render of the admin page
+            navigateTo('admin');
+        }
+        
         function attachEventListeners() {
             // Update order form inputs
             const deliveryInput = document.getElementById('deliveryAddress');
@@ -1061,7 +1389,6 @@ Please confirm availability and delivery time. Thank you!`;
                     updateOrderForm('customerLocation', e.target.value);
                 });
             }
-
             const waterSizeSelect = document.getElementById('waterSize');
             if (waterSizeSelect) {
                 waterSizeSelect.addEventListener('change', (e) => {
@@ -1069,7 +1396,6 @@ Please confirm availability and delivery time. Thank you!`;
                 });
             }
         }
-
         // Initialize user location
         function initUserLocation() {
             if (navigator.geolocation) {
@@ -1103,7 +1429,6 @@ Please confirm availability and delivery time. Thank you!`;
                 initializeMap();
             }
         }
-
         // Initialize map when on home page
         function initializeMap() {
             if (appState.currentPage === 'home' && appState.userLocation) {
@@ -1129,13 +1454,11 @@ Please confirm availability and delivery time. Thank you!`;
                                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                     attribution: '© OpenStreetMap contributors'
                                 }).addTo(map);
-
                                 // Add user location marker
                                 L.marker([appState.userLocation.lat, appState.userLocation.lng])
                                     .addTo(map)
                                     .bindPopup('📍 Your Location')
                                     .openPopup();
-
                                 // Add vendor markers
                                 VENDORS.forEach(vendor => {
                                     L.marker([vendor.lat, vendor.lng])
@@ -1153,7 +1476,153 @@ Please confirm availability and delivery time. Thank you!`;
                 }, 100);
             }
         }
-
+        
+        function initializeAdminMap() {
+            if (appState.currentPage === 'admin' && appState.userLocation) {
+                setTimeout(() => {
+                    const mapContainer = document.getElementById('adminMapContainer');
+                    const mapPlaceholder = document.getElementById('adminMapPlaceholder');
+                    
+                    if (mapContainer && mapPlaceholder) {
+                        // Clear placeholder
+                        mapPlaceholder.style.display = 'none';
+                        
+                        // Create actual map div
+                        const mapDiv = document.createElement('div');
+                        mapDiv.id = 'adminActualMap';
+                        mapDiv.style.cssText = 'width: 100%; height: 100%;';
+                        mapContainer.appendChild(mapDiv);
+                        
+                        // Load Leaflet and initialize map
+                        if (typeof L !== 'undefined') {
+                            try {
+                                const map = L.map('adminActualMap').setView([appState.userLocation.lat, appState.userLocation.lng], 13);
+                                appState.adminMap = map; // Store reference for later use
+                                
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    attribution: '© OpenStreetMap contributors'
+                                }).addTo(map);
+                                
+                                // Add user location marker
+                                L.marker([appState.userLocation.lat, appState.userLocation.lng])
+                                    .addTo(map)
+                                    .bindPopup('📍 Your Location');
+                                
+                                // Add vendor markers
+                                VENDORS.forEach(vendor => {
+                                    L.marker([vendor.lat, vendor.lng], { vendorId: vendor.id })
+                                        .addTo(map)
+                                        .bindPopup(`<b>💧 ${vendor.name}</b><br>${vendor.distance_km}km away<br>Phone: ${vendor.phone}<br><button onclick="editVendor(${vendor.id})" style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; background: #007aff; color: white; border: none; border-radius: 4px; cursor: pointer;">Edit Vendor</button>`);
+                                });
+                            } catch (error) {
+                                console.log('Admin map initialization failed:', error);
+                                mapPlaceholder.style.display = 'block';
+                                mapPlaceholder.innerHTML = `
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                                    <div>Map loading failed</div>
+                                `;
+                            }
+                        } else {
+                            mapPlaceholder.style.display = 'block';
+                            mapPlaceholder.innerHTML = `
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                                <div>Map library not available</div>
+                            `;
+                        }
+                    }
+                }, 100);
+            }
+        }
+        
+        function initializeVendorLocationPicker() {
+            if ((appState.currentPage === 'add-vendor' || appState.currentPage === 'edit-vendor') && appState.newVendorLocation) {
+                setTimeout(() => {
+                    const pickerContainer = document.getElementById('vendorLocationPicker');
+                    
+                    if (pickerContainer) {
+                        // Clear placeholder
+                        pickerContainer.innerHTML = '';
+                        
+                        // Create map div
+                        const mapDiv = document.createElement('div');
+                        mapDiv.id = 'vendorPickerMap';
+                        mapDiv.style.cssText = 'width: 100%; height: 100%;';
+                        pickerContainer.appendChild(mapDiv);
+                        
+                        // Load Leaflet and initialize map
+                        if (typeof L !== 'undefined') {
+                            try {
+                                const map = L.map('vendorPickerMap').setView([appState.newVendorLocation.lat, appState.newVendorLocation.lng], 15);
+                                
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    attribution: '© OpenStreetMap contributors'
+                                }).addTo(map);
+                                
+                                // Add marker for vendor location
+                                const marker = L.marker([appState.newVendorLocation.lat, appState.newVendorLocation.lng], {
+                                    draggable: true
+                                }).addTo(map);
+                                
+                                // Update location when marker is dragged
+                                marker.on('dragend', function(event) {
+                                    const position = marker.getLatLng();
+                                    appState.newVendorLocation = {
+                                        lat: position.lat,
+                                        lng: position.lng
+                                    };
+                                    updateLocationCoordinates();
+                                });
+                                
+                                // Update location when map is clicked
+                                map.on('click', function(event) {
+                                    const position = event.latlng;
+                                    marker.setLatLng(position);
+                                    appState.newVendorLocation = {
+                                        lat: position.lat,
+                                        lng: position.lng
+                                    };
+                                    updateLocationCoordinates();
+                                });
+                                
+                                // Initial update of coordinates
+                                updateLocationCoordinates();
+                                
+                                // Store map reference
+                                appState.vendorPickerMap = map;
+                                appState.vendorPickerMarker = marker;
+                            } catch (error) {
+                                console.log('Vendor location picker initialization failed:', error);
+                                pickerContainer.innerHTML = `
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
+                                        <div style="text-align: center;">
+                                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
+                                            <div>Map loading failed</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            pickerContainer.innerHTML = `
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
+                                        <div>Map library not available</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                }, 100);
+            }
+        }
+        
+        function updateLocationCoordinates() {
+            const coordinatesDiv = document.getElementById('locationCoordinates');
+            if (coordinatesDiv && appState.newVendorLocation) {
+                coordinatesDiv.textContent = `Selected: ${appState.newVendorLocation.lat.toFixed(4)}, ${appState.newVendorLocation.lng.toFixed(4)}`;
+            }
+        }
+        
         function showStaticMap() {
             const mapPlaceholder = document.getElementById('mapPlaceholder');
             if (mapPlaceholder) {
@@ -1179,13 +1648,11 @@ Please confirm availability and delivery time. Thank you!`;
                 mapPlaceholder.style.display = 'block';
             }
         }
-
         // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
             render();
             initUserLocation();
         });
-
         // Re-initialize map when navigating to home
         function navigateTo(page) {
             appState.currentPage = page;
@@ -1194,11 +1661,13 @@ Please confirm availability and delivery time. Thank you!`;
             
             if (page === 'home' && appState.userLocation) {
                 initializeMap();
+            } else if (page === 'admin' && appState.adminLoggedIn) {
+                initializeAdminMap();
+            } else if ((page === 'add-vendor' || page === 'edit-vendor') && appState.newVendorLocation) {
+                initializeVendorLocationPicker();
             }
         }
-
         // PWA functionality (Service Worker registration removed for compatibility)
-
         // Add to home screen prompt (simplified for better compatibility)
         let installPromptAvailable = false;
         
@@ -1213,7 +1682,6 @@ Please confirm availability and delivery time. Thank you!`;
                 }
             }, 5000);
         });
-
         function showInstallPrompt(promptEvent) {
             const installBanner = document.createElement('div');
             installBanner.style.cssText = `
@@ -1262,7 +1730,6 @@ Please confirm availability and delivery time. Thank you!`;
             });
         }
     </script>
-
     <style>
         @keyframes slideUp {
             from { transform: translateY(100px); opacity: 0; }
