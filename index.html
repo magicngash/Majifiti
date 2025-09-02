@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>H2O Nearby</title>
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSDJPIE5lYXJieSIsInNob3J0X25hbWUiOiJIMk8gTmVhcmJ5IiwiZGVzY3JpcHRpb24iOiJXYXRlciBkZWxpdmVyeSBhcHAiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJ0aGVtZV9jb2xvciI6IiMwMDdhZmYiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSTFNakVpSUdobGFXZG9kRDBpTlRJeElpQjJhV1YzUW05NFBTSXdJREFnTlRJeElEVXlNU0krUEhOMGVXeGxQaTV6Ym5WNmRXdDZJSE10TFhCMExtVndleWgwZEc5dk1sa2ZQRzkwUW14aGJrcGhjbUZqZEdWdVRHZGZUWEJqYVRNelFTaGZabUo1Vmtoek5VVjZabTFzZFZGVUx3PTOPT09JIiwiaWRlbnRpZmllciI6Ik0xUE9OTEZJTCIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSDJPIE5lYXJieSIsInNob3J0X25hbWUiOiJIMk8gTmVhcmJ5IiwiZGVzY3JpcHRpb24iOiJXYXRlciBkZWxpdmVyeSBhcHAiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJ0aGVtZV9jb2xvciI6IiMwMDdhZmYiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSTFNakVpSUdobGFXZG9kRDBpTlRJeElpQjJhV1YzUW05NFBTSXdJREFnTlRJeElEVXlNU0krUEhOMGVXeGxQaTV6Ym5WNmRXdDZJSE10TFhCMExtVndleGgwZEc5dk1sa2ZQRzkwUW14aGJrcGhjbUZqZEdWdVRHZGZUWEJqYVRNelFTaGZabUo1Vmtoek5VVjZabTFzZFZGVUx3PTOPT09JIiwiaWRlbnRpZmllciI6Ik0xUE9OTEZJTCIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
     <style>
         * {
             margin: 0;
@@ -71,8 +71,8 @@
         .menu-overlay {
             position: fixed;
             top: 0;
-            left: 0;
             right: 0;
+            left: 0;
             bottom: 0;
             background: rgba(0,0,0,0.5);
             z-index: 1000;
@@ -90,9 +90,12 @@
             background: white;
             width: 280px;
             height: 100vh;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            transform: translateX(-100%);
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transform: translateX(100%);
             transition: transform 0.3s ease;
+            position: absolute;
+            right: 0;
+            top: 0;
         }
         
         .menu-overlay.open .menu {
@@ -496,6 +499,51 @@
             color: #1f2937;
         }
         
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .checkbox-group input {
+            margin-right: 0.5rem;
+        }
+        
+        .coordinates-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .coordinates-input-group .input {
+            flex: 1;
+        }
+        
+        .location-method-toggle {
+            display: flex;
+            margin-bottom: 1rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+        
+        .location-method-btn {
+            flex: 1;
+            padding: 0.5rem;
+            background: none;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .location-method-btn.active {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: #007aff;
+        }
+        
         @keyframes slideIn {
             from { transform: translateY(-10px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -524,6 +572,10 @@
             }
             
             .admin-actions {
+                flex-direction: column;
+            }
+            
+            .coordinates-input-group {
                 flex-direction: column;
             }
         }
@@ -573,8 +625,13 @@
             selectedVendor: null,
             isAdmin: false,
             adminLoggedIn: false,
+            rememberAdmin: false,
             editingVendor: null,
-            newVendorLocation: null
+            newVendorLocation: null,
+            adminMap: null,
+            vendorPickerMap: null,
+            vendorPickerMarker: null,
+            locationInputMethod: 'map' // 'map' or 'manual'
         };
         // Storage functions
         const getStoredData = (key, defaultValue) => {
@@ -598,6 +655,13 @@
         appState.customerData = getStoredData('h2o_customer', INITIAL_CUSTOMER);
         appState.orderHistory = getStoredData('h2o_orders', INITIAL_ORDERS);
         appState.notifications = getStoredData('h2o_notifications', appState.notifications);
+        appState.rememberAdmin = getStoredData('h2o_remember_admin', false);
+        
+        // Auto-login if remember me is enabled
+        if (appState.rememberAdmin) {
+            appState.adminLoggedIn = true;
+        }
+        
         // Render functions
         function render() {
             const app = document.getElementById('root');
@@ -616,9 +680,8 @@
             return `
                 <header class="header">
                     <div class="header-content">
-                        <button class="hamburger" onclick="toggleMenu()">☰</button>
                         <div class="logo">💧 H2O Nearby</div>
-                        <div></div>
+                        <button class="hamburger" onclick="toggleMenu()">☰</button>
                     </div>
                 </header>
             `;
@@ -657,6 +720,8 @@
                 case 'notifications': return renderNotificationsPage();
                 case 'admin': return renderAdminPage();
                 case 'admin-login': return renderAdminLoginPage();
+                case 'add-vendor': return renderAddEditVendorPage();
+                case 'edit-vendor': return renderAddEditVendorPage();
                 default: return renderHomePage();
             }
         }
@@ -966,6 +1031,10 @@
                         <label class="label">Password</label>
                         <input type="password" class="input" id="adminPassword" placeholder="Enter password">
                     </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="rememberMe" ${appState.rememberAdmin ? 'checked' : ''}>
+                        <label for="rememberMe">Remember me on this device</label>
+                    </div>
                     <button class="btn btn-full" onclick="adminLogin()">Login</button>
                     <button class="btn btn-secondary btn-full" onclick="navigateTo('home')">Cancel</button>
                 </div>
@@ -1081,19 +1150,62 @@
                     
                     <div class="location-picker">
                         <h3 style="margin-bottom: 0.5rem;">Vendor Location</h3>
-                        <div id="vendorLocationPicker" style="height: 200px; border-radius: 8px; overflow: hidden; margin-bottom: 0.5rem;">
-                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
-                                <div style="text-align: center;">
-                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
-                                    <div>Loading map...</div>
+                        
+                        <div class="location-method-toggle">
+                            <button class="location-method-btn ${appState.locationInputMethod === 'map' ? 'active' : ''}" onclick="setLocationInputMethod('map')">
+                                🗺️ Map Selection
+                            </button>
+                            <button class="location-method-btn ${appState.locationInputMethod === 'manual' ? 'active' : ''}" onclick="setLocationInputMethod('manual')">
+                                📍 Enter Coordinates
+                            </button>
+                        </div>
+                        
+                        ${appState.locationInputMethod === 'map' ? `
+                            <div id="vendorLocationPicker" style="height: 200px; border-radius: 8px; overflow: hidden; margin-bottom: 0.5rem;">
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
+                                        <div>Loading map...</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="location-info">
-                            Click on the map to set vendor location
-                        </div>
+                            <div class="location-info">
+                                Click on the map to set vendor location
+                            </div>
+                        ` : `
+                            <div class="coordinates-input-group">
+                                <div>
+                                    <label class="label">Latitude</label>
+                                    <input 
+                                        type="number" 
+                                        class="input" 
+                                        id="vendorLatitude" 
+                                        value="${vendor.lat || appState.newVendorLocation?.lat || ''}"
+                                        placeholder="e.g., -1.2921"
+                                        step="any"
+                                        onchange="updateCoordinatesFromInput()"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="label">Longitude</label>
+                                    <input 
+                                        type="number" 
+                                        class="input" 
+                                        id="vendorLongitude" 
+                                        value="${vendor.lng || appState.newVendorLocation?.lng || ''}"
+                                        placeholder="e.g., 36.8219"
+                                        step="any"
+                                        onchange="updateCoordinatesFromInput()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="location-info">
+                                Enter the GPS coordinates for the vendor location
+                            </div>
+                        `}
+                        
                         <div id="locationCoordinates" style="margin-top: 0.5rem; font-weight: 500;">
-                            ${isEdit ? `Current: ${vendor.lat.toFixed(4)}, ${vendor.lng.toFixed(4)}` : 'No location selected'}
+                            ${isEdit ? `Current: ${vendor.lat?.toFixed(4) || 'N/A'}, ${vendor.lng?.toFixed(4) || 'N/A'}` : 'No location selected'}
                         </div>
                     </div>
                     
@@ -1139,7 +1251,13 @@
             } else if (page === 'admin' && appState.adminLoggedIn) {
                 initializeAdminMap();
             } else if ((page === 'add-vendor' || page === 'edit-vendor') && appState.userLocation) {
-                initializeVendorLocationPicker();
+                setTimeout(() => {
+                    if (appState.locationInputMethod === 'map') {
+                        initializeVendorLocationPicker();
+                    } else {
+                        updateCoordinatesDisplay();
+                    }
+                }, 100);
             }
         }
         function toggleFavorite(vendorId) {
@@ -1271,9 +1389,12 @@ Please confirm availability and delivery time. Thank you!`;
         function adminLogin() {
             const username = document.getElementById('adminUsername').value;
             const password = document.getElementById('adminPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
             
             if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
                 appState.adminLoggedIn = true;
+                appState.rememberAdmin = rememberMe;
+                setStoredData('h2o_remember_admin', rememberMe);
                 navigateTo('admin');
             } else {
                 alert('Invalid username or password');
@@ -1282,6 +1403,8 @@ Please confirm availability and delivery time. Thank you!`;
         
         function adminLogout() {
             appState.adminLoggedIn = false;
+            appState.rememberAdmin = false;
+            setStoredData('h2o_remember_admin', false);
             appState.editingVendor = null;
             appState.newVendorLocation = null;
             navigateTo('home');
@@ -1290,18 +1413,57 @@ Please confirm availability and delivery time. Thank you!`;
         function addNewVendor() {
             appState.editingVendor = null;
             appState.newVendorLocation = appState.userLocation || { lat: -1.2921, lng: 36.8219 };
+            appState.locationInputMethod = 'map';
             appState.currentPage = 'add-vendor';
             render();
-            initializeVendorLocationPicker();
         }
         
         function editVendor(vendorId) {
             appState.editingVendor = vendorId;
             const vendor = VENDORS.find(v => v.id === vendorId);
-            appState.newVendorLocation = { lat: vendor.lat, lng: vendor.lng };
+            appState.newVendorLocation = { 
+                lat: vendor.lat || -1.2921, 
+                lng: vendor.lng || 36.8219 
+            };
+            appState.locationInputMethod = 'map';
             appState.currentPage = 'edit-vendor';
             render();
-            initializeVendorLocationPicker();
+        }
+        
+        function setLocationInputMethod(method) {
+            appState.locationInputMethod = method;
+            render();
+            
+            // Initialize the appropriate input method after rendering
+            setTimeout(() => {
+                if (method === 'map') {
+                    initializeVendorLocationPicker();
+                } else {
+                    updateCoordinatesDisplay();
+                }
+            }, 100);
+        }
+        
+        function updateCoordinatesFromInput() {
+            const latInput = document.getElementById('vendorLatitude');
+            const lngInput = document.getElementById('vendorLongitude');
+            
+            if (latInput && lngInput) {
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(lngInput.value);
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    appState.newVendorLocation = { lat, lng };
+                    updateCoordinatesDisplay();
+                }
+            }
+        }
+        
+        function updateCoordinatesDisplay() {
+            const coordinatesDiv = document.getElementById('locationCoordinates');
+            if (coordinatesDiv && appState.newVendorLocation) {
+                coordinatesDiv.textContent = `Selected: ${appState.newVendorLocation.lat.toFixed(4)}, ${appState.newVendorLocation.lng.toFixed(4)}`;
+            }
         }
         
         function saveVendor() {
@@ -1316,9 +1478,31 @@ Please confirm availability and delivery time. Thank you!`;
                 return;
             }
             
-            if (!appState.newVendorLocation) {
-                alert('Please select a location on the map');
-                return;
+            // Check if we have a valid location
+            if (appState.locationInputMethod === 'map') {
+                if (!appState.newVendorLocation) {
+                    alert('Please select a location on the map');
+                    return;
+                }
+            } else {
+                // Manual input method
+                const latInput = document.getElementById('vendorLatitude');
+                const lngInput = document.getElementById('vendorLongitude');
+                
+                if (!latInput || !lngInput || !latInput.value || !lngInput.value) {
+                    alert('Please enter valid coordinates');
+                    return;
+                }
+                
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(lngInput.value);
+                
+                if (isNaN(lat) || isNaN(lng)) {
+                    alert('Please enter valid numeric coordinates');
+                    return;
+                }
+                
+                appState.newVendorLocation = { lat, lng };
             }
             
             const available_sizes = [];
@@ -1328,15 +1512,17 @@ Please confirm availability and delivery time. Thank you!`;
             if (appState.editingVendor) {
                 // Update existing vendor
                 const index = VENDORS.findIndex(v => v.id === appState.editingVendor);
-                VENDORS[index] = {
-                    ...VENDORS[index],
-                    name,
-                    phone,
-                    distance_km,
-                    available_sizes,
-                    lat: appState.newVendorLocation.lat,
-                    lng: appState.newVendorLocation.lng
-                };
+                if (index !== -1) {
+                    VENDORS[index] = {
+                        ...VENDORS[index],
+                        name,
+                        phone,
+                        distance_km,
+                        available_sizes,
+                        lat: appState.newVendorLocation.lat,
+                        lng: appState.newVendorLocation.lng
+                    };
+                }
             } else {
                 // Add new vendor
                 const newId = Math.max(...VENDORS.map(v => v.id), 0) + 1;
@@ -1535,91 +1721,84 @@ Please confirm availability and delivery time. Thank you!`;
         }
         
         function initializeVendorLocationPicker() {
-            if ((appState.currentPage === 'add-vendor' || appState.currentPage === 'edit-vendor') && appState.newVendorLocation) {
-                setTimeout(() => {
-                    const pickerContainer = document.getElementById('vendorLocationPicker');
+            if ((appState.currentPage === 'add-vendor' || appState.currentPage === 'edit-vendor') && 
+                appState.newVendorLocation && appState.locationInputMethod === 'map') {
+                
+                const pickerContainer = document.getElementById('vendorLocationPicker');
+                
+                if (pickerContainer) {
+                    // Clear placeholder
+                    pickerContainer.innerHTML = '';
                     
-                    if (pickerContainer) {
-                        // Clear placeholder
-                        pickerContainer.innerHTML = '';
-                        
-                        // Create map div
-                        const mapDiv = document.createElement('div');
-                        mapDiv.id = 'vendorPickerMap';
-                        mapDiv.style.cssText = 'width: 100%; height: 100%;';
-                        pickerContainer.appendChild(mapDiv);
-                        
-                        // Load Leaflet and initialize map
-                        if (typeof L !== 'undefined') {
-                            try {
-                                const map = L.map('vendorPickerMap').setView([appState.newVendorLocation.lat, appState.newVendorLocation.lng], 15);
-                                
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                    attribution: '© OpenStreetMap contributors'
-                                }).addTo(map);
-                                
-                                // Add marker for vendor location
-                                const marker = L.marker([appState.newVendorLocation.lat, appState.newVendorLocation.lng], {
-                                    draggable: true
-                                }).addTo(map);
-                                
-                                // Update location when marker is dragged
-                                marker.on('dragend', function(event) {
-                                    const position = marker.getLatLng();
-                                    appState.newVendorLocation = {
-                                        lat: position.lat,
-                                        lng: position.lng
-                                    };
-                                    updateLocationCoordinates();
-                                });
-                                
-                                // Update location when map is clicked
-                                map.on('click', function(event) {
-                                    const position = event.latlng;
-                                    marker.setLatLng(position);
-                                    appState.newVendorLocation = {
-                                        lat: position.lat,
-                                        lng: position.lng
-                                    };
-                                    updateLocationCoordinates();
-                                });
-                                
-                                // Initial update of coordinates
-                                updateLocationCoordinates();
-                                
-                                // Store map reference
-                                appState.vendorPickerMap = map;
-                                appState.vendorPickerMarker = marker;
-                            } catch (error) {
-                                console.log('Vendor location picker initialization failed:', error);
-                                pickerContainer.innerHTML = `
-                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
-                                        <div style="text-align: center;">
-                                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
-                                            <div>Map loading failed</div>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        } else {
+                    // Create map div
+                    const mapDiv = document.createElement('div');
+                    mapDiv.id = 'vendorPickerMap';
+                    mapDiv.style.cssText = 'width: 100%; height: 100%;';
+                    pickerContainer.appendChild(mapDiv);
+                    
+                    // Load Leaflet and initialize map
+                    if (typeof L !== 'undefined') {
+                        try {
+                            const map = L.map('vendorPickerMap').setView([appState.newVendorLocation.lat, appState.newVendorLocation.lng], 15);
+                            
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors'
+                            }).addTo(map);
+                            
+                            // Add marker for vendor location
+                            const marker = L.marker([appState.newVendorLocation.lat, appState.newVendorLocation.lng], {
+                                draggable: true
+                            }).addTo(map);
+                            
+                            // Update location when marker is dragged
+                            marker.on('dragend', function(event) {
+                                const position = marker.getLatLng();
+                                appState.newVendorLocation = {
+                                    lat: position.lat,
+                                    lng: position.lng
+                                };
+                                updateCoordinatesDisplay();
+                            });
+                            
+                            // Update location when map is clicked
+                            map.on('click', function(event) {
+                                const position = event.latlng;
+                                marker.setLatLng(position);
+                                appState.newVendorLocation = {
+                                    lat: position.lat,
+                                    lng: position.lng
+                                };
+                                updateCoordinatesDisplay();
+                            });
+                            
+                            // Initial update of coordinates
+                            updateCoordinatesDisplay();
+                            
+                            // Store map reference
+                            appState.vendorPickerMap = map;
+                            appState.vendorPickerMarker = marker;
+                        } catch (error) {
+                            console.log('Vendor location picker initialization failed:', error);
                             pickerContainer.innerHTML = `
                                 <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
                                     <div style="text-align: center;">
                                         <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
-                                        <div>Map library not available</div>
+                                        <div>Map loading failed</div>
                                     </div>
                                 </div>
                             `;
                         }
+                    } else {
+                        pickerContainer.innerHTML = `
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
+                                    <div>Map library not available</div>
+                                </div>
+                            </div>
+                        `;
                     }
-                }, 100);
-            }
-        }
-        
-        function updateLocationCoordinates() {
-            const coordinatesDiv = document.getElementById('locationCoordinates');
-            if (coordinatesDiv && appState.newVendorLocation) {
-                coordinatesDiv.textContent = `Selected: ${appState.newVendorLocation.lat.toFixed(4)}, ${appState.newVendorLocation.lng.toFixed(4)}`;
+                }
             }
         }
         
@@ -1664,7 +1843,13 @@ Please confirm availability and delivery time. Thank you!`;
             } else if (page === 'admin' && appState.adminLoggedIn) {
                 initializeAdminMap();
             } else if ((page === 'add-vendor' || page === 'edit-vendor') && appState.newVendorLocation) {
-                initializeVendorLocationPicker();
+                setTimeout(() => {
+                    if (appState.locationInputMethod === 'map') {
+                        initializeVendorLocationPicker();
+                    } else {
+                        updateCoordinatesDisplay();
+                    }
+                }, 100);
             }
         }
         // PWA functionality (Service Worker registration removed for compatibility)
