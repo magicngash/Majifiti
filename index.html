@@ -1,1925 +1,462 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>H2O Nearby</title>
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSDJPIE5lYXJieSIsInNob3J0X25hbWUiOiJIMk8gTmVhcmJ5IiwiZGVzY3JpcHRpb24iOiJXYXRlciBkZWxpdmVyeSBhcHAiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJ0aGVtZV9jb2xvciI6IiMwMDdhZmYiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSTFNakVpSUdobGFXZG9kRDBpTlRJeElpQjJhV1YzUW05NFBTSXdJREFnTlRJeElEVXlNU0krUEhOMGVXeGxQaTV6Ym5WNmRXdDZJSE10TFhCMExtVndleGgwZEc5dk1sa2ZQRzkwUW14aGJrcGhjbUZqZEdWdVRHZGZUWEJqYVRNelFTaGZabUo1Vmtoek5VVjZabTFzZFZGVUx3PTOPT09JIiwiaWRlbnRpZmllciI6Ik0xUE9OTEZJTCIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-        
-        .app {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #007aff, #0056b3);
-            color: white;
-            padding: 1rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
-            z-index: 100;
-        }
-        
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .hamburger {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        
-        .hamburger:hover {
-            background: rgba(255,255,255,0.1);
-        }
-        
-        .menu-overlay {
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .menu-overlay.open {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .menu {
-            background: white;
-            width: 280px;
-            height: 100vh;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            position: absolute;
-            right: 0;
-            top: 0;
-        }
-        
-        .menu-overlay.open .menu {
-            transform: translateX(0);
-        }
-        
-        .menu-header {
-            background: linear-gradient(135deg, #007aff, #0056b3);
-            color: white;
-            padding: 1.5rem;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        
-        .menu-items {
-            padding: 1rem 0;
-        }
-        
-        .menu-item {
-            display: block;
-            padding: 1rem 1.5rem;
-            color: #374151;
-            text-decoration: none;
-            border-bottom: 1px solid #f3f4f6;
-            transition: background 0.2s;
-            cursor: pointer;
-        }
-        
-        .menu-item:hover {
-            background: #f9fafb;
-        }
-        
-        .main {
-            flex: 1;
-            padding: 1rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        
-        .map-container {
-            height: 300px;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            background: #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        
-        .map-placeholder {
-            text-align: center;
-            color: #6b7280;
-            padding: 2rem;
-        }
-        
-        .btn {
-            background: #007aff;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            font-family: inherit;
-        }
-        
-        .btn:hover {
-            background: #0056b3;
-            transform: translateY(-1px);
-        }
-        
-        .btn:active {
-            transform: translateY(0);
-        }
-        
-        .btn-secondary {
-            background: #6b7280;
-        }
-        
-        .btn-secondary:hover {
-            background: #4b5563;
-        }
-        
-        .btn-danger {
-            background: #ef4444;
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-        
-        .btn-full {
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-        
-        .vendor-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e5e7eb;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .vendor-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-        
-        .vendor-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.5rem;
-        }
-        
-        .vendor-name {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #1f2937;
-        }
-        
-        .distance {
-            color: #6b7280;
-            font-size: 0.9rem;
-        }
-        
-        .favorite-badge {
-            background: #fbbf24;
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            margin-left: 0.5rem;
-        }
-        
-        .vendor-info {
-            margin: 0.5rem 0;
-            color: #6b7280;
-        }
-        
-        .vendor-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .vendor-actions .btn {
-            flex: 1;
-            padding: 0.5rem;
-            font-size: 0.9rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        .label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #374151;
-        }
-        
-        .input, .select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
-            background: white;
-            font-family: inherit;
-        }
-        
-        .input:focus, .select:focus {
-            outline: none;
-            border-color: #007aff;
-            box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
-        }
-        
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            color: #1f2937;
-        }
-        
-        .order-summary {
-            background: #f0f9ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .order-item {
-            background: white;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid #e5e7eb;
-            transition: transform 0.2s;
-        }
-        
-        .order-item:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        
-        .order-date {
-            color: #6b7280;
-            font-size: 0.9rem;
-        }
-        
-        .notification-item {
-            background: white;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-left: 4px solid #007aff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .notification-title {
-            font-weight: bold;
-            margin-bottom: 0.25rem;
-        }
-        
-        .notification-time {
-            color: #6b7280;
-            font-size: 0.8rem;
-        }
-        
-        .quantity-selector {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin: 1rem 0;
-            background: #f8fafc;
-            padding: 1rem;
-            border-radius: 8px;
-        }
-        
-        .quantity-btn {
-            background: #007aff;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        
-        .quantity-btn:hover {
-            background: #0056b3;
-            transform: scale(1.05);
-        }
-        
-        .quantity-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .quantity-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            min-width: 60px;
-            text-align: center;
-            background: white;
-            padding: 0.5rem;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-        }
-        
-        .success-message {
-            background: #d1fae5;
-            border: 1px solid #86efac;
-            color: #065f46;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            text-align: center;
-            animation: slideIn 0.3s ease;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #6b7280;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: #6b7280;
-        }
-        
-        .empty-state-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .status-badge {
-            background: #10b981;
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .admin-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .admin-map-container {
-            height: 300px;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            background: #e5e7eb;
-            position: relative;
-        }
-        
-        .admin-map-placeholder {
-            text-align: center;
-            color: #6b7280;
-            padding: 2rem;
-        }
-        
-        .location-picker {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .location-info {
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-            color: #6b7280;
-        }
-        
-        .vendor-edit-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .vendor-edit-actions .btn {
-            flex: 1;
-        }
-        
-        .admin-login {
-            max-width: 400px;
-            margin: 0 auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .admin-login-title {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-            color: #1f2937;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .checkbox-group input {
-            margin-right: 0.5rem;
-        }
-        
-        .coordinates-input-group {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .coordinates-input-group .input {
-            flex: 1;
-        }
-        
-        .location-method-toggle {
-            display: flex;
-            margin-bottom: 1rem;
-            background: #f1f5f9;
-            border-radius: 8px;
-            padding: 0.25rem;
-        }
-        
-        .location-method-btn {
-            flex: 1;
-            padding: 0.5rem;
-            background: none;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        
-        .location-method-btn.active {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            color: #007aff;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateY(-10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        @media (max-width: 768px) {
-            .main {
-                padding: 0.5rem;
-            }
-            
-            .vendor-actions {
-                flex-direction: column;
-            }
-            
-            .vendor-actions .btn {
-                flex: none;
-            }
-            
-            .menu {
-                width: 100vw;
-            }
-            
-            .quantity-selector {
-                gap: 1.5rem;
-                padding: 1.5rem;
-            }
-            
-            .admin-actions {
-                flex-direction: column;
-            }
-            
-            .coordinates-input-group {
-                flex-direction: column;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-    <script>
-        // Dummy data
-        let VENDORS = [
-            {"id":1,"name":"Crystal Water","phone":"254722868475","distance_km":0.8,"available_sizes":["10L","20L"],"lat":-1.2921,"lng":36.8219},
-            {"id":2,"name":"Pure H2O","phone":"254722868475","distance_km":1.2,"available_sizes":["10L","20L"],"lat":-1.2841,"lng":36.8155},
-            {"id":3,"name":"AquaFresh","phone":"254722868475","distance_km":1.5,"available_sizes":["10L","20L"],"lat":-1.3028,"lng":36.8073}
-        ];
-        const INITIAL_CUSTOMER = {
-            "id":1,
-            "name":"John Doe",
-            "phone":"254712999888",
-            "email":"johndoe@example.com",
-            "default_address":"123 Main St, Nairobi",
-            "preferred_vendor":1,
-            "preferred_size":"20L",
-            "last_order_quantity":2
+import React, { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+
+const SCENARIOS = [
+  {
+    id: 'interview',
+    name: 'Job Interview',
+    prompt: 'You are a friendly hiring manager conducting a job interview. Ask relevant questions and provide encouraging feedback. Keep responses to 2-3 sentences.'
+  },
+  {
+    id: 'networking',
+    name: 'Networking Event',
+    prompt: 'You are a professional at a networking event. Make small talk, ask about work, and share professional interests. Keep responses to 2-3 sentences.'
+  },
+  {
+    id: 'casual',
+    name: 'Casual Conversation',
+    prompt: 'You are a friendly person having a casual conversation. Be warm, ask follow-up questions, and keep the chat light. Keep responses to 2-3 sentences.'
+  }
+];
+
+export default function SocialAnxietyTrainer() {
+  const [selectedScenario, setSelectedScenario] = useState(SCENARIOS[0]);
+  const [conversation, setConversation] = useState([]);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [userText, setUserText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const [browserSupport, setBrowserSupport] = useState(true);
+  const [micPermission, setMicPermission] = useState('prompt'); // 'prompt', 'granted', 'denied'
+
+  const recognitionRef = useRef(null);
+  const synthRef = useRef(null);
+
+  useEffect(() => {
+    // Initialize speech synthesis
+    synthRef.current = window.speechSynthesis;
+
+    // Check browser support for speech recognition
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setBrowserSupport(false);
+      setError('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    // Check microphone permission status
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'microphone' }).then((permissionStatus) => {
+        setMicPermission(permissionStatus.state);
+        
+        permissionStatus.onchange = () => {
+          setMicPermission(permissionStatus.state);
         };
-        const INITIAL_ORDERS = [
-            {"order_id":101,"vendor_id":1,"vendor_name":"Crystal Water","water_size":"20L","quantity":2,"status":"Sent","order_date":"2025-08-31 09:00"},
-            {"order_id":102,"vendor_id":2,"vendor_name":"Pure H2O","water_size":"10L","quantity":1,"status":"Sent","order_date":"2025-08-30 15:30"},
-            {"order_id":103,"vendor_id":3,"vendor_name":"AquaFresh","water_size":"20L","quantity":1,"status":"Sent","order_date":"2025-08-29 11:20"}
-        ];
-        // Admin credentials
-        const ADMIN_CREDENTIALS = {
-            username: "admin",
-            password: "h2oadmin123"
-        };
-        // Global app state
-        let appState = {
-            currentPage: 'home',
-            menuOpen: false,
-            userLocation: null,
-            favorites: [1],
-            customerData: {...INITIAL_CUSTOMER},
-            orderHistory: [...INITIAL_ORDERS],
-            notifications: [
-                {id: 1, title: "Order Confirmed", message: "Your order from Crystal Water has been confirmed", time: "2 hours ago"},
-                {id: 2, title: "Welcome!", message: "Welcome to H2O Nearby! Find water vendors near you.", time: "1 day ago"}
-            ],
-            selectedVendor: null,
-            isAdmin: false,
-            adminLoggedIn: false,
-            rememberAdmin: false,
-            editingVendor: null,
-            newVendorLocation: null,
-            adminMap: null,
-            vendorPickerMap: null,
-            vendorPickerMarker: null,
-            locationInputMethod: 'map' // 'map' or 'manual'
-        };
-        // Storage functions
-        const getStoredData = (key, defaultValue) => {
-            try {
-                const stored = localStorage.getItem(key);
-                return stored ? JSON.parse(stored) : defaultValue;
-            } catch {
-                return defaultValue;
-            }
-        };
-        const setStoredData = (key, value) => {
-            try {
-                localStorage.setItem(key, JSON.stringify(value));
-            } catch {
-                console.log('Storage not available');
-            }
-        };
-        // Load initial data from storage
-        VENDORS = getStoredData('h2o_vendors', VENDORS);
-        appState.favorites = getStoredData('h2o_favorites', [1]);
-        appState.customerData = getStoredData('h2o_customer', INITIAL_CUSTOMER);
-        appState.orderHistory = getStoredData('h2o_orders', INITIAL_ORDERS);
-        appState.notifications = getStoredData('h2o_notifications', appState.notifications);
-        appState.rememberAdmin = getStoredData('h2o_remember_admin', false);
-        
-        // Auto-login if remember me is enabled
-        if (appState.rememberAdmin) {
-            appState.adminLoggedIn = true;
+      }).catch(() => {
+        // Permission API not supported, will prompt when needed
+        setMicPermission('prompt');
+      });
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = false;
+    recognitionRef.current.lang = 'en-US';
+
+    recognitionRef.current.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setUserText(transcript);
+      handleUserMessage(transcript);
+    };
+
+    recognitionRef.current.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      if (event.error === 'not-allowed') {
+        setError('Microphone access denied. Please allow microphone access in your browser settings.');
+        setMicPermission('denied');
+      } else if (event.error === 'no-speech') {
+        setError('No speech detected. Please try again.');
+      } else {
+        setError(`Speech error: ${event.error}`);
+      }
+      setIsListening(false);
+    };
+
+    recognitionRef.current.onend = () => {
+      setIsListening(false);
+    };
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore errors on cleanup
         }
-        
-        // Render functions
-        function render() {
-            const app = document.getElementById('root');
-            app.innerHTML = `
-                <div class="app">
-                    ${renderHeader()}
-                    ${renderMenu()}
-                    <main class="main">
-                        ${renderCurrentPage()}
-                    </main>
+      }
+      if (synthRef.current) {
+        synthRef.current.cancel();
+      }
+    };
+  }, []);
+
+  const requestMicrophonePermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately, we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+      setMicPermission('granted');
+      setError('');
+      return true;
+    } catch (err) {
+      console.error('Microphone permission error:', err);
+      setError('Microphone access denied. Please allow microphone access to use this app.');
+      setMicPermission('denied');
+      return false;
+    }
+  };
+
+  const startListening = async () => {
+    if (!browserSupport) return;
+    
+    // Request permission first if not granted
+    if (micPermission !== 'granted') {
+      const granted = await requestMicrophonePermission();
+      if (!granted) return;
+    }
+    
+    setError('');
+    setUserText('');
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
+    setIsSpeaking(false);
+    
+    try {
+      recognitionRef.current.start();
+      setIsListening(true);
+    } catch (err) {
+      console.error('Error starting recognition:', err);
+      setError('Failed to start listening. Please try again.');
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // Ignore errors
+      }
+      setIsListening(false);
+    }
+  };
+
+  const handleUserMessage = async (text) => {
+    const userMessage = { role: 'user', content: text, timestamp: new Date() };
+    setConversation(prev => [...prev, userMessage]);
+    setIsProcessing(true);
+    setError('');
+
+    try {
+      // Build conversation history for context
+      const conversationHistory = conversation.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: selectedScenario.prompt,
+          messages: [
+            ...conversationHistory,
+            { role: 'user', content: text }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const aiReply = data.content?.[0]?.text || 'I apologize, I didn\'t catch that. Could you repeat?';
+
+      const aiMessage = { 
+        role: 'assistant', 
+        content: aiReply,
+        timestamp: new Date()
+      };
+      
+      setConversation(prev => [...prev, aiMessage]);
+      speakText(aiReply);
+
+    } catch (err) {
+      console.error('AI Error:', err);
+      setError(`AI connection error: ${err.message}`);
+      
+      // Use fallback response
+      const fallbackMsg = 'That\'s interesting! Tell me more about that.';
+      const aiMessage = { 
+        role: 'assistant', 
+        content: fallbackMsg,
+        timestamp: new Date()
+      };
+      setConversation(prev => [...prev, aiMessage]);
+      speakText(fallbackMsg);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const speakText = (text) => {
+    if (!synthRef.current) return;
+    
+    synthRef.current.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
+      setIsSpeaking(false);
+    };
+
+    synthRef.current.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
+  const resetConversation = () => {
+    setConversation([]);
+    setUserText('');
+    setError('');
+    stopListening();
+    stopSpeaking();
+    
+    // AI starts first with a greeting
+    const greeting = selectedScenario.id === 'interview' 
+      ? 'Hello! Thanks for coming in today. Tell me a bit about yourself and why you\'re interested in this position.'
+      : selectedScenario.id === 'networking'
+      ? 'Hi there! Great to meet you. What brings you to this event today?'
+      : 'Hey! How\'s your day going?';
+    
+    const aiMessage = { 
+      role: 'assistant', 
+      content: greeting,
+      timestamp: new Date()
+    };
+    setConversation([aiMessage]);
+    
+    // Delay speaking slightly to ensure UI is ready
+    setTimeout(() => speakText(greeting), 100);
+  };
+
+  const changeScenario = (scenario) => {
+    setSelectedScenario(scenario);
+    setConversation([]);
+    setUserText('');
+    setError('');
+    stopListening();
+    stopSpeaking();
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Social Anxiety Trainer</h1>
+          <p className="text-gray-600 mb-6">Practice conversations with AI-powered voice interaction</p>
+
+          {/* Scenario Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Choose Scenario:</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {SCENARIOS.map(scenario => (
+                <button
+                  key={scenario.id}
+                  onClick={() => changeScenario(scenario)}
+                  disabled={conversation.length > 0}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    selectedScenario.id === scenario.id
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 hover:border-indigo-300 text-gray-700'
+                  } ${conversation.length > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <div className="font-semibold text-sm sm:text-base">{scenario.name}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Start Button */}
+          {conversation.length === 0 && (
+            <div>
+              {micPermission === 'denied' && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-sm font-semibold mb-2">⚠️ Microphone Access Required</p>
+                  <p className="text-yellow-700 text-sm">
+                    This app needs microphone access to work. Please:
+                  </p>
+                  <ol className="text-sm text-yellow-700 mt-2 ml-4 list-decimal">
+                    <li>Click the 🔒 or 🔊 icon in your browser's address bar</li>
+                    <li>Allow microphone access for this site</li>
+                    <li>Refresh the page</li>
+                  </ol>
                 </div>
-            `;
-            attachEventListeners();
-        }
-        function renderHeader() {
-            return `
-                <header class="header">
-                    <div class="header-content">
-                        <div class="logo">💧 H2O Nearby</div>
-                        <button class="hamburger" onclick="toggleMenu()">☰</button>
-                    </div>
-                </header>
-            `;
-        }
-        function renderMenu() {
-            return `
-                <div class="menu-overlay ${appState.menuOpen ? 'open' : ''}" onclick="closeMenu()">
-                    <div class="menu" onclick="event.stopPropagation()">
-                        <div class="menu-header">H2O Nearby</div>
-                        <div class="menu-items">
-                            <a class="menu-item" onclick="navigateTo('home')">🏠 Home</a>
-                            <a class="menu-item" onclick="navigateTo('vendors')">💧 Vendors Near Me</a>
-                            <a class="menu-item" onclick="navigateTo('favorites')">⭐ Favorites</a>
-                            <a class="menu-item" onclick="navigateTo('orders')">📋 Order History</a>
-                            <a class="menu-item" onclick="navigateTo('profile')">👤 Customer Details</a>
-                            <a class="menu-item" onclick="navigateTo('notifications')">🔔 Notifications ${appState.notifications.length > 0 ? `(${appState.notifications.length})` : ''}</a>
-                            ${appState.adminLoggedIn ? `
-                                <a class="menu-item" onclick="navigateTo('admin')">⚙️ Admin Panel</a>
-                                <a class="menu-item" onclick="adminLogout()">🚪 Logout</a>
-                            ` : `
-                                <a class="menu-item" onclick="navigateTo('admin-login')">🔐 Admin Login</a>
-                            `}
-                        </div>
-                    </div>
+              )}
+              {micPermission === 'prompt' && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    🎤 When you start, you'll be asked to allow microphone access. Click "Allow" to continue.
+                  </p>
                 </div>
-            `;
-        }
-        function renderCurrentPage() {
-            switch(appState.currentPage) {
-                case 'home': return renderHomePage();
-                case 'vendors': return renderVendorsPage();
-                case 'favorites': return renderFavoritesPage();
-                case 'order': return renderOrderPage();
-                case 'orders': return renderOrderHistoryPage();
-                case 'profile': return renderProfilePage();
-                case 'notifications': return renderNotificationsPage();
-                case 'admin': return renderAdminPage();
-                case 'admin-login': return renderAdminLoginPage();
-                case 'add-vendor': return renderAddEditVendorPage();
-                case 'edit-vendor': return renderAddEditVendorPage();
-                default: return renderHomePage();
-            }
-        }
-        function renderHomePage() {
-            return `
-                <div>
-                    <h1 class="page-title">Find Water Vendors Near You</h1>
-                    
-                    <div class="map-container" id="mapContainer">
-                        <div class="map-placeholder" id="mapPlaceholder">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
-                            <div>Loading Interactive Map...</div>
-                            <div style="font-size: 0.9rem; margin-top: 0.5rem;">
-                                ${appState.userLocation ? 
-                                    `Your Location: ${appState.userLocation.lat.toFixed(4)}, ${appState.userLocation.lng.toFixed(4)}` : 
-                                    'Detecting your location...'
-                                }
-                            </div>
-                        </div>
+              )}
+              <button
+                onClick={resetConversation}
+                disabled={!browserSupport}
+                className="w-full py-4 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {micPermission === 'granted' ? 'Start Conversation' : 'Start & Allow Microphone'}
+              </button>
+            </div>
+          )}
+
+          {/* Conversation Area */}
+          {conversation.length > 0 && (
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4 h-80 sm:h-96 overflow-y-auto mb-4 space-y-3">
+                {conversation.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-xs sm:max-w-md px-4 py-3 rounded-2xl ${
+                        msg.role === 'user'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-800 border border-gray-200'
+                      }`}
+                    >
+                      <p className="text-sm">{msg.content}</p>
                     </div>
-                    
-                    <button class="btn btn-full" onclick="navigateTo('vendors')">
-                        💧 Find Vendors Near Me
-                    </button>
-                    
-                    <div style="text-align: center; margin-top: 1rem; color: #6b7280;">
-                        ${appState.userLocation ? 
-                            'Map shows your location and nearby water vendors' : 
-                            'Grant location permission to see vendors near you'
-                        }
+                  </div>
+                ))}
+                {isProcessing && (
+                  <div className="flex justify-start">
+                    <div className="bg-white text-gray-800 border border-gray-200 px-4 py-3 rounded-2xl">
+                      <div className="flex space-x-2">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
                     </div>
-                </div>
-            `;
-        }
-        function renderVendorsPage() {
-            const sortedVendors = [...VENDORS].sort((a, b) => {
-                const aIsFav = appState.favorites.includes(a.id);
-                const bIsFav = appState.favorites.includes(b.id);
-                if (aIsFav && !bIsFav) return -1;
-                if (!aIsFav && bIsFav) return 1;
-                return a.distance_km - b.distance_km;
-            });
-            return `
-                <div>
-                    <h1 class="page-title">Vendors Near Me</h1>
-                    ${sortedVendors.map(vendor => renderVendorCard(vendor)).join('')}
-                </div>
-            `;
-        }
-        function renderFavoritesPage() {
-            const favoriteVendors = VENDORS.filter(vendor => appState.favorites.includes(vendor.id));
-            return `
-                <div>
-                    <h1 class="page-title">My Favorite Vendors</h1>
-                    
-                    ${favoriteVendors.length === 0 ? `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">⭐</div>
-                            <div>No favorite vendors yet.</div>
-                            <div style="margin-top: 0.5rem;">Add some from the Vendors page!</div>
-                            <button class="btn" style="margin-top: 1rem;" onclick="navigateTo('vendors')">
-                                Browse Vendors
-                            </button>
-                        </div>
-                    ` : favoriteVendors.map(vendor => renderVendorCard(vendor)).join('')}
-                </div>
-            `;
-        }
-        function renderVendorCard(vendor) {
-            const isFavorite = appState.favorites.includes(vendor.id);
-            const lastOrder = appState.orderHistory.find(order => order.vendor_id === vendor.id);
-            return `
-                <div class="vendor-card">
-                    <div class="vendor-header">
-                        <div>
-                            <div class="vendor-name">
-                                ${vendor.name}
-                                ${isFavorite ? '<span class="favorite-badge">★ Favorite</span>' : ''}
-                            </div>
-                            <div class="distance">${vendor.distance_km}km away</div>
-                        </div>
-                    </div>
-                    
-                    <div class="vendor-info">
-                        Available: ${vendor.available_sizes.join(', ')}
-                        ${lastOrder ? `
-                            <div style="margin-top: 0.25rem; font-weight: 500;">
-                                Last order: ${lastOrder.quantity}x ${lastOrder.water_size}
-                            </div>
-                        ` : ''}
-                    </div>
-                    
-                    <div class="vendor-actions">
-                        <button class="btn" onclick="orderFromVendor(${vendor.id})">
-                            📱 Order via WhatsApp
-                        </button>
-                        <button 
-                            class="btn ${isFavorite ? 'btn-secondary' : ''}"
-                            onclick="toggleFavorite(${vendor.id})"
-                        >
-                            ${isFavorite ? '★ Favorited' : '☆ Add to Favorites'}
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        function renderOrderPage() {
-            const vendor = appState.selectedVendor || VENDORS.find(v => v.id === appState.customerData.preferred_vendor) || VENDORS[0];
-            const selectedSize = appState.orderFormData?.selectedSize || appState.customerData.preferred_size || '20L';
-            const quantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
-            const customerLocation = appState.orderFormData?.customerLocation || appState.customerData.default_address;
-            return `
-                <div>
-                    <h1 class="page-title">Place Order</h1>
-                    
-                    <div class="vendor-card">
-                        <div class="vendor-name">${vendor.name}</div>
-                        <div class="distance">${vendor.distance_km}km away</div>
-                        <div class="vendor-info">Available: ${vendor.available_sizes.join(', ')}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Water Size</label>
-                        <select class="select" id="waterSize" onchange="updateOrderForm('selectedSize', this.value)">
-                            ${vendor.available_sizes.map(size => `
-                                <option value="${size}" ${size === selectedSize ? 'selected' : ''}>${size}</option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Quantity</label>
-                        <div class="quantity-selector">
-                            <button 
-                                class="quantity-btn"
-                                onclick="updateQuantity(-1)"
-                                ${quantity <= 1 ? 'disabled' : ''}
-                            >
-                                -
-                            </button>
-                            <div class="quantity-value">${quantity}</div>
-                            <button 
-                                class="quantity-btn"
-                                onclick="updateQuantity(1)"
-                            >
-                                +
-                            </button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Delivery Address</label>
-                        <input 
-                            type="text"
-                            class="input"
-                            id="deliveryAddress"
-                            value="${customerLocation}"
-                            onchange="updateOrderForm('customerLocation', this.value)"
-                            placeholder="Enter delivery address"
-                        />
-                    </div>
-                    <div class="order-summary">
-                        <h3 style="margin-bottom: 0.5rem;">Order Summary</h3>
-                        <p><strong>Vendor:</strong> ${vendor.name}</p>
-                        <p><strong>Water:</strong> ${quantity}x ${selectedSize}</p>
-                        <p><strong>Customer:</strong> ${appState.customerData.name}</p>
-                        <p><strong>Phone:</strong> ${appState.customerData.phone}</p>
-                        <p><strong>Address:</strong> ${customerLocation}</p>
-                    </div>
-                    <button class="btn btn-full" onclick="submitOrder()">
-                        📱 Send Order via WhatsApp
-                    </button>
-                    <button class="btn btn-secondary btn-full" onclick="navigateTo('vendors')">
-                        ← Back to Vendors
-                    </button>
-                </div>
-            `;
-        }
-        function renderOrderHistoryPage() {
-            return `
-                <div>
-                    <h1 class="page-title">Order History</h1>
-                    
-                    ${appState.orderHistory.length === 0 ? `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <div>No orders yet.</div>
-                            <div style="margin-top: 0.5rem;">Place your first order!</div>
-                            <button class="btn" style="margin-top: 1rem;" onclick="navigateTo('vendors')">
-                                Browse Vendors
-                            </button>
-                        </div>
-                    ` : appState.orderHistory.map(order => `
-                        <div class="order-item">
-                            <div class="order-header">
-                                <div>
-                                    <div style="font-weight: bold;">${order.vendor_name}</div>
-                                    <div>${order.quantity}x ${order.water_size}</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div class="status-badge">${order.status}</div>
-                                    <div class="order-date">${order.order_date}</div>
-                                </div>
-                            </div>
-                            <button 
-                                class="btn"
-                                style="margin-top: 0.5rem;"
-                                onclick="reorder(${order.vendor_id}, '${order.water_size}', ${order.quantity})"
-                            >
-                                🔄 Reorder
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-        function renderProfilePage() {
-            return `
-                <div>
-                    <h1 class="page-title">Customer Details</h1>
-                    
-                    <div class="form-group">
-                        <label class="label">Name</label>
-                        <input 
-                            type="text"
-                            class="input"
-                            id="customerName"
-                            value="${appState.customerData.name}"
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Phone Number</label>
-                        <input 
-                            type="tel"
-                            class="input"
-                            id="customerPhone"
-                            value="${appState.customerData.phone}"
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Email (Optional)</label>
-                        <input 
-                            type="email"
-                            class="input"
-                            id="customerEmail"
-                            value="${appState.customerData.email}"
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Default Address</label>
-                        <input 
-                            type="text"
-                            class="input"
-                            id="customerAddress"
-                            value="${appState.customerData.default_address}"
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Preferred Vendor</label>
-                        <select class="select" id="preferredVendor">
-                            ${VENDORS.map(vendor => `
-                                <option value="${vendor.id}" ${vendor.id === appState.customerData.preferred_vendor ? 'selected' : ''}>
-                                    ${vendor.name}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Preferred Water Size</label>
-                        <select class="select" id="preferredSize">
-                            <option value="10L" ${appState.customerData.preferred_size === '10L' ? 'selected' : ''}>10L</option>
-                            <option value="20L" ${appState.customerData.preferred_size === '20L' ? 'selected' : ''}>20L</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-full" onclick="saveProfile()">
-                        💾 Save Details
-                    </button>
-                </div>
-            `;
-        }
-        function renderNotificationsPage() {
-            return `
-                <div>
-                    <h1 class="page-title">Notifications</h1>
-                    
-                    ${appState.notifications.length === 0 ? `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🔔</div>
-                            <div>No notifications yet.</div>
-                        </div>
-                    ` : appState.notifications.map(notification => `
-                        <div class="notification-item">
-                            <div class="notification-title">${notification.title}</div>
-                            <div>${notification.message}</div>
-                            <div class="notification-time">${notification.time}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-        function renderAdminLoginPage() {
-            return `
-                <div class="admin-login">
-                    <h2 class="admin-login-title">Admin Login</h2>
-                    <div class="form-group">
-                        <label class="label">Username</label>
-                        <input type="text" class="input" id="adminUsername" placeholder="Enter username">
-                    </div>
-                    <div class="form-group">
-                        <label class="label">Password</label>
-                        <input type="password" class="input" id="adminPassword" placeholder="Enter password">
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="rememberMe" ${appState.rememberAdmin ? 'checked' : ''}>
-                        <label for="rememberMe">Remember me on this device</label>
-                    </div>
-                    <button class="btn btn-full" onclick="adminLogin()">Login</button>
-                    <button class="btn btn-secondary btn-full" onclick="navigateTo('home')">Cancel</button>
-                </div>
-            `;
-        }
-        function renderAdminPage() {
-            if (!appState.adminLoggedIn) {
-                return renderAdminLoginPage();
-            }
-            
-            return `
-                <div>
-                    <div class="admin-header">
-                        <h1 class="page-title">Vendor Management</h1>
-                        <div class="admin-actions">
-                            <button class="btn" onclick="addNewVendor()">➕ Add New Vendor</button>
-                            <button class="btn btn-secondary" onclick="refreshVendors()">🔄 Refresh</button>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-map-container" id="adminMapContainer">
-                        <div class="admin-map-placeholder" id="adminMapPlaceholder">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
-                            <div>Loading Vendor Map...</div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h2 style="margin-bottom: 1rem;">Vendor List</h2>
-                        ${VENDORS.length === 0 ? `
-                            <div class="empty-state">
-                                <div class="empty-state-icon">💧</div>
-                                <div>No vendors registered yet.</div>
-                                <button class="btn" style="margin-top: 1rem;" onclick="addNewVendor()">
-                                    Add First Vendor
-                                </button>
-                            </div>
-                        ` : VENDORS.map(vendor => `
-                            <div class="vendor-card">
-                                <div class="vendor-header">
-                                    <div>
-                                        <div class="vendor-name">${vendor.name}</div>
-                                        <div class="distance">${vendor.distance_km}km away</div>
-                                    </div>
-                                    <div>
-                                        <button class="btn" onclick="editVendor(${vendor.id})">✏️ Edit</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="vendor-info">
-                                    Phone: ${vendor.phone}<br>
-                                    Available: ${vendor.available_sizes.join(', ')}<br>
-                                    Location: ${vendor.lat.toFixed(4)}, ${vendor.lng.toFixed(4)}
-                                </div>
-                                
-                                <div class="vendor-edit-actions">
-                                    <button class="btn btn-danger" onclick="deleteVendor(${vendor.id})">
-                                        🗑️ Delete
-                                    </button>
-                                    <button class="btn" onclick="viewVendorOnMap(${vendor.id})">
-                                        📍 View on Map
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-        function renderAddEditVendorPage() {
-            const isEdit = !!appState.editingVendor;
-            const vendor = isEdit ? VENDORS.find(v => v.id === appState.editingVendor) : {};
-            
-            return `
-                <div>
-                    <h1 class="page-title">${isEdit ? 'Edit Vendor' : 'Add New Vendor'}</h1>
-                    
-                    <div class="form-group">
-                        <label class="label">Vendor Name</label>
-                        <input 
-                            type="text" 
-                            class="input" 
-                            id="vendorName" 
-                            value="${vendor.name || ''}"
-                            placeholder="Enter vendor name"
-                        />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="label">Phone Number</label>
-                        <input 
-                            type="tel" 
-                            class="input" 
-                            id="vendorPhone" 
-                            value="${vendor.phone || ''}"
-                            placeholder="Enter phone number with country code"
-                        />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="label">Available Sizes</label>
-                        <div style="margin-bottom: 0.5rem;">
-                            <label style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                                <input type="checkbox" id="size10L" ${vendor.available_sizes?.includes('10L') ? 'checked' : ''} style="margin-right: 0.5rem;">
-                                <span>10L</span>
-                            </label>
-                            <label style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                                <input type="checkbox" id="size20L" ${vendor.available_sizes?.includes('20L') ? 'checked' : ''} style="margin-right: 0.5rem;">
-                                <span>20L</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="location-picker">
-                        <h3 style="margin-bottom: 0.5rem;">Vendor Location</h3>
-                        
-                        <div class="location-method-toggle">
-                            <button class="location-method-btn ${appState.locationInputMethod === 'map' ? 'active' : ''}" onclick="setLocationInputMethod('map')">
-                                🗺️ Map Selection
-                            </button>
-                            <button class="location-method-btn ${appState.locationInputMethod === 'manual' ? 'active' : ''}" onclick="setLocationInputMethod('manual')">
-                                📍 Enter Coordinates
-                            </button>
-                        </div>
-                        
-                        ${appState.locationInputMethod === 'map' ? `
-                            <div id="vendorLocationPicker" style="height: 200px; border-radius: 8px; overflow: hidden; margin-bottom: 0.5rem;">
-                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
-                                        <div>Loading map...</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="location-info">
-                                Click on the map to set vendor location
-                            </div>
-                        ` : `
-                            <div class="coordinates-input-group">
-                                <div>
-                                    <label class="label">Latitude</label>
-                                    <input 
-                                        type="number" 
-                                        class="input" 
-                                        id="vendorLatitude" 
-                                        value="${vendor.lat || appState.newVendorLocation?.lat || ''}"
-                                        placeholder="e.g., -1.2921"
-                                        step="any"
-                                        onchange="updateCoordinatesFromInput()"
-                                    />
-                                </div>
-                                <div>
-                                    <label class="label">Longitude</label>
-                                    <input 
-                                        type="number" 
-                                        class="input" 
-                                        id="vendorLongitude" 
-                                        value="${vendor.lng || appState.newVendorLocation?.lng || ''}"
-                                        placeholder="e.g., 36.8219"
-                                        step="any"
-                                        onchange="updateCoordinatesFromInput()"
-                                    />
-                                </div>
-                            </div>
-                            <div class="location-info">
-                                Enter the GPS coordinates for the vendor location
-                            </div>
-                        `}
-                        
-                        <div id="locationCoordinates" style="margin-top: 0.5rem; font-weight: 500;">
-                            ${isEdit ? `Current: ${vendor.lat?.toFixed(4) || 'N/A'}, ${vendor.lng?.toFixed(4) || 'N/A'}` : 'No location selected'}
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="label">Distance (km)</label>
-                        <input 
-                            type="number" 
-                            class="input" 
-                            id="vendorDistance" 
-                            value="${vendor.distance_km || ''}"
-                            placeholder="Enter distance in km"
-                            step="0.1"
-                        />
-                    </div>
-                    
-                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button class="btn btn-full" onclick="saveVendor()">
-                            ${isEdit ? '💾 Save Changes' : '➕ Add Vendor'}
-                        </button>
-                        <button class="btn btn-secondary btn-full" onclick="navigateTo('admin')">
-                            ← Cancel
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        // Event handlers
-        function toggleMenu() {
-            appState.menuOpen = !appState.menuOpen;
-            render();
-        }
-        function closeMenu() {
-            appState.menuOpen = false;
-            render();
-        }
-        function navigateTo(page) {
-            appState.currentPage = page;
-            appState.menuOpen = false;
-            render();
-            
-            if (page === 'home' && appState.userLocation) {
-                initializeMap();
-            } else if (page === 'admin' && appState.adminLoggedIn) {
-                initializeAdminMap();
-            } else if ((page === 'add-vendor' || page === 'edit-vendor') && appState.userLocation) {
-                setTimeout(() => {
-                    if (appState.locationInputMethod === 'map') {
-                        initializeVendorLocationPicker();
-                    } else {
-                        updateCoordinatesDisplay();
-                    }
-                }, 100);
-            }
-        }
-        function toggleFavorite(vendorId) {
-            if (appState.favorites.includes(vendorId)) {
-                appState.favorites = appState.favorites.filter(id => id !== vendorId);
-            } else {
-                appState.favorites.push(vendorId);
-            }
-            setStoredData('h2o_favorites', appState.favorites);
-            render();
-        }
-        function orderFromVendor(vendorId) {
-            appState.selectedVendor = VENDORS.find(v => v.id === vendorId);
-            appState.orderFormData = null; // Reset form data
-            navigateTo('order');
-        }
-        function updateOrderForm(field, value) {
-            if (!appState.orderFormData) {
-                appState.orderFormData = {};
-            }
-            appState.orderFormData[field] = value;
-        }
-        function updateQuantity(change) {
-            const currentQuantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
-            const newQuantity = Math.max(1, currentQuantity + change);
-            updateOrderForm('quantity', newQuantity);
-            render();
-        }
-        function submitOrder() {
-            const vendor = appState.selectedVendor || VENDORS.find(v => v.id === appState.customerData.preferred_vendor) || VENDORS[0];
-            const selectedSize = appState.orderFormData?.selectedSize || appState.customerData.preferred_size || '20L';
-            const quantity = appState.orderFormData?.quantity || appState.customerData.last_order_quantity || 1;
-            const customerLocation = appState.orderFormData?.customerLocation || appState.customerData.default_address;
-            // Create location links
-            const addressLink = `https://maps.google.com/?q=${encodeURIComponent(customerLocation)}`;
-            const gpsLink = appState.userLocation ? 
-                `https://maps.google.com/?q=${appState.userLocation.lat},${appState.userLocation.lng}` : 
-                addressLink;
-            const message = `Hi ${vendor.name}! I would like to order:
-🏷️ Customer: ${appState.customerData.name}
-📞 Phone: ${appState.customerData.phone}
-💧 Water: ${quantity}x ${selectedSize}
-📍 Address: ${customerLocation}
-🗺️ Address Link: ${addressLink}
-${appState.userLocation ? `📱 My GPS Location: ${gpsLink}` : ''}
-Please confirm availability and delivery time. Thank you!`;
-            const whatsappUrl = `https://wa.me/${vendor.phone}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-            // Save order
-            const newOrder = {
-                order_id: Date.now(),
-                vendor_id: vendor.id,
-                vendor_name: vendor.name,
-                water_size: selectedSize,
-                quantity: quantity,
-                status: "Sent",
-                order_date: new Date().toLocaleString()
-            };
-            
-            appState.orderHistory.unshift(newOrder);
-            setStoredData('h2o_orders', appState.orderHistory);
-            // Update customer preferences
-            appState.customerData.preferred_vendor = vendor.id;
-            appState.customerData.preferred_size = selectedSize;
-            appState.customerData.last_order_quantity = quantity;
-            setStoredData('h2o_customer', appState.customerData);
-            // Add notification
-            const notification = {
-                id: Date.now(),
-                title: "Order Sent",
-                message: `Your order from ${vendor.name} has been sent via WhatsApp`,
-                time: "Just now"
-            };
-            appState.notifications.unshift(notification);
-            setStoredData('h2o_notifications', appState.notifications);
-            // Show success message and redirect
-            showSuccessMessage();
-        }
-        function showSuccessMessage() {
-            const main = document.querySelector('.main');
-            main.innerHTML = `
-                <div class="success-message">
-                    <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
-                    <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">Order Sent!</div>
-                    <div>Your order has been sent via WhatsApp.</div>
-                    <div style="margin-top: 1rem;">Redirecting to order history...</div>
-                </div>
-            `;
-            
-            setTimeout(() => {
-                navigateTo('orders');
-            }, 2000);
-        }
-        function reorder(vendorId, waterSize, quantity) {
-            const vendor = VENDORS.find(v => v.id === vendorId);
-            appState.selectedVendor = vendor;
-            appState.orderFormData = {
-                selectedSize: waterSize,
-                quantity: quantity,
-                customerLocation: appState.customerData.default_address
-            };
-            navigateTo('order');
-        }
-        function saveProfile() {
-            const formData = {
-                ...appState.customerData,
-                name: document.getElementById('customerName').value,
-                phone: document.getElementById('customerPhone').value,
-                email: document.getElementById('customerEmail').value,
-                default_address: document.getElementById('customerAddress').value,
-                preferred_vendor: parseInt(document.getElementById('preferredVendor').value),
-                preferred_size: document.getElementById('preferredSize').value
-            };
-            appState.customerData = formData;
-            setStoredData('h2o_customer', formData);
-            // Show success message
-            const main = document.querySelector('.main');
-            const successDiv = document.createElement('div');
-            successDiv.className = 'success-message';
-            successDiv.innerHTML = '✅ Profile updated successfully!';
-            main.insertBefore(successDiv, main.firstChild);
-            setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.remove();
-                }
-            }, 3000);
-        }
-        // Admin functions
-        function adminLogin() {
-            const username = document.getElementById('adminUsername').value;
-            const password = document.getElementById('adminPassword').value;
-            const rememberMe = document.getElementById('rememberMe').checked;
-            
-            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-                appState.adminLoggedIn = true;
-                appState.rememberAdmin = rememberMe;
-                setStoredData('h2o_remember_admin', rememberMe);
-                navigateTo('admin');
-            } else {
-                alert('Invalid username or password');
-            }
-        }
-        
-        function adminLogout() {
-            appState.adminLoggedIn = false;
-            appState.rememberAdmin = false;
-            setStoredData('h2o_remember_admin', false);
-            appState.editingVendor = null;
-            appState.newVendorLocation = null;
-            navigateTo('home');
-        }
-        
-        function addNewVendor() {
-            appState.editingVendor = null;
-            appState.newVendorLocation = appState.userLocation || { lat: -1.2921, lng: 36.8219 };
-            appState.locationInputMethod = 'map';
-            appState.currentPage = 'add-vendor';
-            render();
-        }
-        
-        function editVendor(vendorId) {
-            appState.editingVendor = vendorId;
-            const vendor = VENDORS.find(v => v.id === vendorId);
-            appState.newVendorLocation = { 
-                lat: vendor.lat || -1.2921, 
-                lng: vendor.lng || 36.8219 
-            };
-            appState.locationInputMethod = 'map';
-            appState.currentPage = 'edit-vendor';
-            render();
-        }
-        
-        function setLocationInputMethod(method) {
-            appState.locationInputMethod = method;
-            render();
-            
-            // Initialize the appropriate input method after rendering
-            setTimeout(() => {
-                if (method === 'map') {
-                    initializeVendorLocationPicker();
-                } else {
-                    updateCoordinatesDisplay();
-                }
-            }, 100);
-        }
-        
-        function updateCoordinatesFromInput() {
-            const latInput = document.getElementById('vendorLatitude');
-            const lngInput = document.getElementById('vendorLongitude');
-            
-            if (latInput && lngInput) {
-                const lat = parseFloat(latInput.value);
-                const lng = parseFloat(lngInput.value);
-                
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    appState.newVendorLocation = { lat, lng };
-                    updateCoordinatesDisplay();
-                }
-            }
-        }
-        
-        function updateCoordinatesDisplay() {
-            const coordinatesDiv = document.getElementById('locationCoordinates');
-            if (coordinatesDiv && appState.newVendorLocation) {
-                coordinatesDiv.textContent = `Selected: ${appState.newVendorLocation.lat.toFixed(4)}, ${appState.newVendorLocation.lng.toFixed(4)}`;
-            }
-        }
-        
-        function saveVendor() {
-            const name = document.getElementById('vendorName').value.trim();
-            const phone = document.getElementById('vendorPhone').value.trim();
-            const distance_km = parseFloat(document.getElementById('vendorDistance').value);
-            const size10L = document.getElementById('size10L').checked;
-            const size20L = document.getElementById('size20L').checked;
-            
-            if (!name || !phone || isNaN(distance_km) || (!size10L && !size20L)) {
-                alert('Please fill all required fields');
-                return;
-            }
-            
-            // Check if we have a valid location
-            if (appState.locationInputMethod === 'map') {
-                if (!appState.newVendorLocation) {
-                    alert('Please select a location on the map');
-                    return;
-                }
-            } else {
-                // Manual input method
-                const latInput = document.getElementById('vendorLatitude');
-                const lngInput = document.getElementById('vendorLongitude');
-                
-                if (!latInput || !lngInput || !latInput.value || !lngInput.value) {
-                    alert('Please enter valid coordinates');
-                    return;
-                }
-                
-                const lat = parseFloat(latInput.value);
-                const lng = parseFloat(lngInput.value);
-                
-                if (isNaN(lat) || isNaN(lng)) {
-                    alert('Please enter valid numeric coordinates');
-                    return;
-                }
-                
-                appState.newVendorLocation = { lat, lng };
-            }
-            
-            const available_sizes = [];
-            if (size10L) available_sizes.push('10L');
-            if (size20L) available_sizes.push('20L');
-            
-            if (appState.editingVendor) {
-                // Update existing vendor
-                const index = VENDORS.findIndex(v => v.id === appState.editingVendor);
-                if (index !== -1) {
-                    VENDORS[index] = {
-                        ...VENDORS[index],
-                        name,
-                        phone,
-                        distance_km,
-                        available_sizes,
-                        lat: appState.newVendorLocation.lat,
-                        lng: appState.newVendorLocation.lng
-                    };
-                }
-            } else {
-                // Add new vendor
-                const newId = Math.max(...VENDORS.map(v => v.id), 0) + 1;
-                VENDORS.push({
-                    id: newId,
-                    name,
-                    phone,
-                    distance_km,
-                    available_sizes,
-                    lat: appState.newVendorLocation.lat,
-                    lng: appState.newVendorLocation.lng
-                });
-            }
-            
-            setStoredData('h2o_vendors', VENDORS);
-            navigateTo('admin');
-        }
-        
-        function deleteVendor(vendorId) {
-            if (confirm('Are you sure you want to delete this vendor? This action cannot be undone.')) {
-                VENDORS = VENDORS.filter(v => v.id !== vendorId);
-                setStoredData('h2o_vendors', VENDORS);
-                render();
-            }
-        }
-        
-        function viewVendorOnMap(vendorId) {
-            const vendor = VENDORS.find(v => v.id === vendorId);
-            if (vendor && appState.adminMap) {
-                appState.adminMap.setView([vendor.lat, vendor.lng], 15);
-                // Open the popup for this vendor
-                appState.adminMap.eachLayer(layer => {
-                    if (layer.options && layer.options.vendorId === vendorId) {
-                        layer.openPopup();
-                    }
-                });
-            }
-        }
-        
-        function refreshVendors() {
-            // Force re-render of the admin page
-            navigateTo('admin');
-        }
-        
-        function attachEventListeners() {
-            // Update order form inputs
-            const deliveryInput = document.getElementById('deliveryAddress');
-            if (deliveryInput) {
-                deliveryInput.addEventListener('input', (e) => {
-                    updateOrderForm('customerLocation', e.target.value);
-                });
-            }
-            const waterSizeSelect = document.getElementById('waterSize');
-            if (waterSizeSelect) {
-                waterSizeSelect.addEventListener('change', (e) => {
-                    updateOrderForm('selectedSize', e.target.value);
-                });
-            }
-        }
-        // Initialize user location
-        function initUserLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        appState.userLocation = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        console.log('Location detected successfully');
-                        render();
-                        initializeMap();
-                    },
-                    (error) => {
-                        console.log('Geolocation not available, using default location (Nairobi)');
-                        // Default to Nairobi if geolocation fails
-                        appState.userLocation = { lat: -1.2921, lng: 36.8219 };
-                        render();
-                        initializeMap();
-                    },
-                    {
-                        enableHighAccuracy: false,
-                        timeout: 10000,
-                        maximumAge: 600000
-                    }
-                );
-            } else {
-                console.log('Geolocation not supported, using default location');
-                appState.userLocation = { lat: -1.2921, lng: 36.8219 };
-                render();
-                initializeMap();
-            }
-        }
-        // Initialize map when on home page
-        function initializeMap() {
-            if (appState.currentPage === 'home' && appState.userLocation) {
-                setTimeout(() => {
-                    const mapContainer = document.getElementById('mapContainer');
-                    const mapPlaceholder = document.getElementById('mapPlaceholder');
-                    
-                    if (mapContainer && mapPlaceholder) {
-                        // Clear placeholder
-                        mapPlaceholder.style.display = 'none';
-                        
-                        // Create actual map div
-                        const mapDiv = document.createElement('div');
-                        mapDiv.id = 'actualMap';
-                        mapDiv.style.cssText = 'width: 100%; height: 100%;';
-                        mapContainer.appendChild(mapDiv);
-                        
-                        // Load Leaflet and initialize map
-                        if (typeof L !== 'undefined') {
-                            try {
-                                const map = L.map('actualMap').setView([appState.userLocation.lat, appState.userLocation.lng], 13);
-                                
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                    attribution: '© OpenStreetMap contributors'
-                                }).addTo(map);
-                                // Add user location marker
-                                L.marker([appState.userLocation.lat, appState.userLocation.lng])
-                                    .addTo(map)
-                                    .bindPopup('📍 Your Location')
-                                    .openPopup();
-                                // Add vendor markers
-                                VENDORS.forEach(vendor => {
-                                    L.marker([vendor.lat, vendor.lng])
-                                        .addTo(map)
-                                        .bindPopup(`<b>💧 ${vendor.name}</b><br>${vendor.distance_km}km away<br><button onclick="orderFromVendor(${vendor.id})" style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; background: #007aff; color: white; border: none; border-radius: 4px; cursor: pointer;">Order Now</button>`);
-                                });
-                            } catch (error) {
-                                console.log('Map initialization failed, showing static view');
-                                showStaticMap();
-                            }
-                        } else {
-                            showStaticMap();
-                        }
-                    }
-                }, 100);
-            }
-        }
-        
-        function initializeAdminMap() {
-            if (appState.currentPage === 'admin' && appState.userLocation) {
-                setTimeout(() => {
-                    const mapContainer = document.getElementById('adminMapContainer');
-                    const mapPlaceholder = document.getElementById('adminMapPlaceholder');
-                    
-                    if (mapContainer && mapPlaceholder) {
-                        // Clear placeholder
-                        mapPlaceholder.style.display = 'none';
-                        
-                        // Create actual map div
-                        const mapDiv = document.createElement('div');
-                        mapDiv.id = 'adminActualMap';
-                        mapDiv.style.cssText = 'width: 100%; height: 100%;';
-                        mapContainer.appendChild(mapDiv);
-                        
-                        // Load Leaflet and initialize map
-                        if (typeof L !== 'undefined') {
-                            try {
-                                const map = L.map('adminActualMap').setView([appState.userLocation.lat, appState.userLocation.lng], 13);
-                                appState.adminMap = map; // Store reference for later use
-                                
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                    attribution: '© OpenStreetMap contributors'
-                                }).addTo(map);
-                                
-                                // Add user location marker
-                                L.marker([appState.userLocation.lat, appState.userLocation.lng])
-                                    .addTo(map)
-                                    .bindPopup('📍 Your Location');
-                                
-                                // Add vendor markers
-                                VENDORS.forEach(vendor => {
-                                    L.marker([vendor.lat, vendor.lng], { vendorId: vendor.id })
-                                        .addTo(map)
-                                        .bindPopup(`<b>💧 ${vendor.name}</b><br>${vendor.distance_km}km away<br>Phone: ${vendor.phone}<br><button onclick="editVendor(${vendor.id})" style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; background: #007aff; color: white; border: none; border-radius: 4px; cursor: pointer;">Edit Vendor</button>`);
-                                });
-                            } catch (error) {
-                                console.log('Admin map initialization failed:', error);
-                                mapPlaceholder.style.display = 'block';
-                                mapPlaceholder.innerHTML = `
-                                    <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
-                                    <div>Map loading failed</div>
-                                `;
-                            }
-                        } else {
-                            mapPlaceholder.style.display = 'block';
-                            mapPlaceholder.innerHTML = `
-                                <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
-                                <div>Map library not available</div>
-                            `;
-                        }
-                    }
-                }, 100);
-            }
-        }
-        
-        function initializeVendorLocationPicker() {
-            if ((appState.currentPage === 'add-vendor' || appState.currentPage === 'edit-vendor') && 
-                appState.newVendorLocation && appState.locationInputMethod === 'map') {
-                
-                const pickerContainer = document.getElementById('vendorLocationPicker');
-                
-                if (pickerContainer) {
-                    // Clear placeholder
-                    pickerContainer.innerHTML = '';
-                    
-                    // Create map div
-                    const mapDiv = document.createElement('div');
-                    mapDiv.id = 'vendorPickerMap';
-                    mapDiv.style.cssText = 'width: 100%; height: 100%;';
-                    pickerContainer.appendChild(mapDiv);
-                    
-                    // Load Leaflet and initialize map
-                    if (typeof L !== 'undefined') {
-                        try {
-                            const map = L.map('vendorPickerMap').setView([appState.newVendorLocation.lat, appState.newVendorLocation.lng], 15);
-                            
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '© OpenStreetMap contributors'
-                            }).addTo(map);
-                            
-                            // Add marker for vendor location
-                            const marker = L.marker([appState.newVendorLocation.lat, appState.newVendorLocation.lng], {
-                                draggable: true
-                            }).addTo(map);
-                            
-                            // Update location when marker is dragged
-                            marker.on('dragend', function(event) {
-                                const position = marker.getLatLng();
-                                appState.newVendorLocation = {
-                                    lat: position.lat,
-                                    lng: position.lng
-                                };
-                                updateCoordinatesDisplay();
-                            });
-                            
-                            // Update location when map is clicked
-                            map.on('click', function(event) {
-                                const position = event.latlng;
-                                marker.setLatLng(position);
-                                appState.newVendorLocation = {
-                                    lat: position.lat,
-                                    lng: position.lng
-                                };
-                                updateCoordinatesDisplay();
-                            });
-                            
-                            // Initial update of coordinates
-                            updateCoordinatesDisplay();
-                            
-                            // Store map reference
-                            appState.vendorPickerMap = map;
-                            appState.vendorPickerMarker = marker;
-                        } catch (error) {
-                            console.log('Vendor location picker initialization failed:', error);
-                            pickerContainer.innerHTML = `
-                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
-                                        <div>Map loading failed</div>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        pickerContainer.innerHTML = `
-                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #e5e7eb;">
-                                <div style="text-align: center;">
-                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
-                                    <div>Map library not available</div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
-            }
-        }
-        
-        function showStaticMap() {
-            const mapPlaceholder = document.getElementById('mapPlaceholder');
-            if (mapPlaceholder) {
-                mapPlaceholder.innerHTML = `
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
-                    <div><strong>Your Location</strong></div>
-                    <div style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 1rem;">
-                        ${appState.userLocation ? 
-                            `${appState.userLocation.lat.toFixed(4)}, ${appState.userLocation.lng.toFixed(4)}` : 
-                            'Location detection in progress...'
-                        }
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: bold; margin-bottom: 0.5rem;">Nearby Vendors:</div>
-                        ${VENDORS.map(vendor => `
-                            <div style="margin: 0.5rem 0; padding: 0.75rem; background: rgba(255,255,255,0.95); border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer;" onclick="orderFromVendor(${vendor.id})">
-                                <div style="font-weight: bold;">📍 ${vendor.name}</div>
-                                <div style="font-size: 0.9rem; color: #6b7280;">${vendor.distance_km}km away • ${vendor.available_sizes.join(', ')}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                mapPlaceholder.style.display = 'block';
-            }
-        }
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', () => {
-            render();
-            initUserLocation();
-        });
-        // Re-initialize map when navigating to home
-        function navigateTo(page) {
-            appState.currentPage = page;
-            appState.menuOpen = false;
-            render();
-            
-            if (page === 'home' && appState.userLocation) {
-                initializeMap();
-            } else if (page === 'admin' && appState.adminLoggedIn) {
-                initializeAdminMap();
-            } else if ((page === 'add-vendor' || page === 'edit-vendor') && appState.newVendorLocation) {
-                setTimeout(() => {
-                    if (appState.locationInputMethod === 'map') {
-                        initializeVendorLocationPicker();
-                    } else {
-                        updateCoordinatesDisplay();
-                    }
-                }, 100);
-            }
-        }
-        // PWA functionality (Service Worker registration removed for compatibility)
-        // Add to home screen prompt (simplified for better compatibility)
-        let installPromptAvailable = false;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            installPromptAvailable = true;
-            
-            // Show install suggestion after user has used the app
-            setTimeout(() => {
-                if (installPromptAvailable && !localStorage.getItem('h2o_install_dismissed')) {
-                    showInstallPrompt(e);
-                }
-            }, 5000);
-        });
-        function showInstallPrompt(promptEvent) {
-            const installBanner = document.createElement('div');
-            installBanner.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 20px;
-                right: 20px;
-                background: #007aff;
-                color: white;
-                padding: 1rem;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                z-index: 2000;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                animation: slideUp 0.3s ease;
-            `;
-            
-            installBanner.innerHTML = `
-                <div>
-                    <div style="font-weight: bold; margin-bottom: 0.25rem;">Install H2O Nearby</div>
-                    <div style="font-size: 0.9rem; opacity: 0.9;">Add to home screen for quick access</div>
-                </div>
-                <div>
-                    <button id="installBtn" style="background: white; color: #007aff; border: none; padding: 0.5rem 1rem; border-radius: 6px; margin-right: 0.5rem; cursor: pointer; font-weight: bold;">Install</button>
-                    <button id="dismissBtn" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;">×</button>
-                </div>
-            `;
-            
-            document.body.appendChild(installBanner);
-            
-            document.getElementById('installBtn').addEventListener('click', () => {
-                if (promptEvent) {
-                    promptEvent.prompt();
-                    promptEvent.userChoice.then(() => {
-                        installBanner.remove();
-                        installPromptAvailable = false;
-                    });
-                }
-            });
-            
-            document.getElementById('dismissBtn').addEventListener('click', () => {
-                localStorage.setItem('h2o_install_dismissed', 'true');
-                installBanner.remove();
-            });
-        }
-    </script>
-    <style>
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-    </style>
-</body>
-</html>
+                  </div>
+                )}
+              </div>
+
+              {/* Controls */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={!browserSupport || isProcessing || isSpeaking}
+                  className={`flex-1 py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                    isListening
+                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed'
+                  }`}
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff size={20} />
+                      Stop Speaking
+                    </>
+                  ) : (
+                    <>
+                      <Mic size={20} />
+                      Start Speaking
+                    </>
+                  )}
+                </button>
+
+                {isSpeaking && (
+                  <button
+                    onClick={stopSpeaking}
+                    className="px-6 py-4 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <VolumeX size={20} />
+                    Stop AI
+                  </button>
+                )}
+
+                <button
+                  onClick={resetConversation}
+                  className="px-6 py-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+
+              {/* Status */}
+              <div className="mt-4 text-center min-h-6">
+                {isListening && (
+                  <p className="text-indigo-600 font-semibold flex items-center justify-center gap-2">
+                    <Mic size={18} className="animate-pulse" />
+                    Listening...
+                  </p>
+                )}
+                {isSpeaking && (
+                  <p className="text-green-600 font-semibold flex items-center justify-center gap-2">
+                    <Volume2 size={18} className="animate-pulse" />
+                    AI Speaking...
+                  </p>
+                )}
+                {isProcessing && (
+                  <p className="text-gray-600 font-semibold">Processing...</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Instructions */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">How to Use:</h3>
+            <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+              <li>Select a scenario above</li>
+              <li>Click "Start Conversation" to begin</li>
+              <li>Allow microphone access when prompted</li>
+              <li>Click "Start Speaking" and talk naturally</li>
+              <li>The AI will respond and speak back to you</li>
+              <li>Continue the conversation at your own pace</li>
+            </ol>
+            <p className="text-xs text-blue-700 mt-3">
+              <strong>Browser Support:</strong> Works best in Chrome or Edge. Requires microphone permissions.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
